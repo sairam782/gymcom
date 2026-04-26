@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GymBuddy Vision</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="brand-mark">GymBuddy Vision</div>
+        <nav class="topnav">
+          <a href="#analyzer">Analyzer</a>
+          <a href="#past-reports">Past reports</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#future-live">Future live use</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">AI movement feedback for real workouts</p>
+            <h1>
+              Upload your gym video.
+              <span>See the frames that matter.</span>
+            </h1>
+            <p class="hero-text">
+              GymBuddy Vision analyzes workout clips, identifies the movement,
+              summarizes what happened, and highlights the frames where your
+              form needs correction. No gadget required. Just your video and a
+              smarter feedback loop.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-link" href="#analyzer">Try the analyzer</a>
+              <a class="secondary-button" id="load-demo" href="#past-reports">
+                Load sample report
+              </a>
+            </div>
+            <div class="hero-points">
+              <div>
+                <strong>Video in</strong>
+                <span>Phone, tripod, gym mirror clip</span>
+              </div>
+              <div>
+                <strong>Smart summary out</strong>
+                <span>Exercise, reps, issues, corrections</span>
+              </div>
+              <div>
+                <strong>Frame-first coaching</strong>
+                <span>See where technique breaks down</span>
+              </div>
+            </div>
+          </div>
+
+          <aside class="hero-card">
+            <div class="hero-card-head">
+              <span>Example output</span>
+              <strong id="hero-exercise">Barbell Squat</strong>
+            </div>
+            <div class="hero-stack">
+              <article>
+                <span>Confidence</span>
+                <strong id="hero-confidence">92%</strong>
+              </article>
+              <article>
+                <span>Form score</span>
+                <strong>7.8 / 10</strong>
+              </article>
+              <article>
+                <span>Focus correction</span>
+                <strong>Left knee tracking</strong>
+              </article>
+            </div>
+            <div class="hero-visual">
+              <div class="visual-frame frame-a"></div>
+              <div class="visual-frame frame-b"></div>
+              <div class="visual-frame frame-c"></div>
+            </div>
+            <p class="hero-card-note">
+              Built for uploaded workout videos today, with a path to future
+              live camera guidance.
+            </p>
+          </aside>
+        </section>
+
+        <section class="analyzer-grid" id="analyzer">
+          <section class="panel upload-panel">
+            <div class="panel-heading">
+              <p class="section-tag">Input</p>
+              <h2>Upload workout video</h2>
+              <p>
+                Start with a recorded clip. This intake area now sits right
+                after the introduction so the main action is visible
+                immediately.
+              </p>
+            </div>
+
+            <div class="intake-row">
+              <label class="upload-dropzone" for="video-input">
+                <input id="video-input" type="file" accept="video/*" />
+                <span class="upload-icon">+</span>
+                <strong>Drop your video here</strong>
+                <span>or click to choose a clip</span>
+              </label>
+
+              <div class="intake-side">
+                <div class="preview-shell">
+                  <video id="video-preview" controls playsinline></video>
+                  <div class="preview-empty" id="preview-empty">
+                    <p>No workout video loaded</p>
+                    <span>Upload a clip to preview it and generate a report.</span>
+                  </div>
+                </div>
+
+                <div class="meta-strip" id="video-meta">
+                  <span>No file selected</span>
+                  <span>Duration: --</span>
+                  <span>Resolution: --</span>
+                </div>
+
+                <div class="input-grid">
+                  <label>
+                    Camera Angle
+                    <select id="camera-angle">
+                      <option value="side">Side view</option>
+                      <option value="front">Front view</option>
+                      <option value="three-quarter">45° view</option>
+                    </select>
+                  </label>
+                  <label>
+                    Output Style
+                    <select id="training-goal">
+                      <option value="summary">Summary first</option>
+                      <option value="correction">Correction focused</option>
+                      <option value="coach">Coach feedback</option>
+                      <option value="rehab">Safe movement review</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div class="action-row">
+                  <button id="analyze-btn" class="primary-button" type="button">
+                    Generate analysis
+                  </button>
+                  <a class="secondary-button action-link" href="#past-reports" id="sample-report-btn">
+                    Load sample report
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel output-panel">
+            <div class="panel-heading">
+              <p class="section-tag">Output</p>
+              <h2>Summary and corrections</h2>
+              <p>
+                This layout is built around your prompt, but simplified around
+                what matters most: summary, issue frames, safety, and coaching
+                corrections.
+              </p>
+            </div>
+
+            <div class="status-strip" id="status-strip">
+              Waiting for video input
+            </div>
+
+            <div class="report-grid">
+              <article class="report-card report-summary">
+                <div class="report-label">Summary</div>
+                <pre id="report-summary" class="report-pre"></pre>
+              </article>
+
+              <article class="report-card">
+                <div class="report-label">Movement Phases</div>
+                <ul id="movement-phases" class="report-list"></ul>
+              </article>
+
+              <article class="report-card">
+                <div class="report-label">Posture Summary</div>
+                <ul id="posture-summary" class="report-list"></ul>
+              </article>
+
+              <article class="report-card wide-card">
+                <div class="report-label">Important Frames to Review</div>
+                <div class="frame-grid" id="frame-grid"></div>
+              </article>
+
+              <article class="report-card wide-card">
+                <div class="report-label">Joint Angle Estimates</div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Joint</th>
+                        <th>Bottom</th>
+                        <th>Lockout</th>
+                        <th>In Range?</th>
+                        <th>L/R Match?</th>
+                      </tr>
+                    </thead>
+                    <tbody id="angle-table"></tbody>
+                  </table>
+                </div>
+                <p class="table-note">
+                  Note: all angles are visual estimates, not precision
+                  measurements.
+                </p>
+              </article>
+
+              <article class="report-card">
+                <div class="report-label">Left vs. Right Balance</div>
+                <ul id="balance-list" class="report-list"></ul>
+              </article>
+
+              <article class="report-card">
+                <div class="report-label">Tempo &amp; Control</div>
+                <ul id="tempo-list" class="report-list"></ul>
+              </article>
+
+              <article class="report-card score-card">
+                <div class="report-label">Form Score</div>
+                <div class="score-value" id="form-score">--</div>
+                <p id="form-score-note" class="score-note">
+                  Upload a video to generate a form score.
+                </p>
+              </article>
+
+              <article class="report-card">
+                <div class="report-label">Safety Risks</div>
+                <ul id="risk-list" class="report-list"></ul>
+              </article>
+
+              <article class="report-card">
+                <div class="report-label">Major Issues</div>
+                <ul id="issues-list" class="report-list"></ul>
+              </article>
+
+              <article class="report-card">
+                <div class="report-label">Corrections</div>
+                <ol id="corrections-list" class="report-list numbered"></ol>
+              </article>
+
+              <article class="report-card wide-card feedback-card">
+                <div class="report-label">Coach Feedback</div>
+                <p id="coach-feedback" class="coach-feedback">
+                  Your trainer-style feedback will appear here.
+                </p>
+              </article>
+            </div>
+          </section>
+        </section>
+
+        <section class="past-reports-section" id="past-reports">
+          <div class="panel-heading">
+            <p class="section-tag">Archive</p>
+            <h2>Past reports</h2>
+            <p>
+              Sample report history can live here so users can revisit previous
+              training analyses, compare corrections, and track improvement.
+            </p>
+          </div>
+          <div class="past-reports-grid">
+            <article class="past-report-card active-report">
+              <span>Apr 26</span>
+              <strong>Barbell Squat Review</strong>
+              <p>6 reps, moderate fatigue, left knee tracking flagged, score 7.8.</p>
+            </article>
+            <article class="past-report-card">
+              <span>Apr 23</span>
+              <strong>Deadlift Session</strong>
+              <p>5 reps, setup drift noted, stronger lockout recommendations.</p>
+            </article>
+            <article class="past-report-card">
+              <span>Apr 20</span>
+              <strong>Shoulder Press Check</strong>
+              <p>8 reps, right-side dominance and shrugging reviewed.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="feature-band" id="how-it-works">
+          <article class="feature-card">
+            <p class="section-tag">01</p>
+            <h2>Upload any training clip</h2>
+            <p>
+              Record from the front, side, or 45° view. GymBuddy Vision is
+              designed for normal phone videos, not a dedicated device.
+            </p>
+          </article>
+          <article class="feature-card">
+            <p class="section-tag">02</p>
+            <h2>Review summary + problem frames</h2>
+            <p>
+              Get the movement name, rep count, posture observations, and
+              critical frame checkpoints where form quality changes.
+            </p>
+          </article>
+          <article class="feature-card">
+            <p class="section-tag">03</p>
+            <h2>Correct faster next session</h2>
+            <p>
+              Use concise trainer-style feedback and actionable corrections
+              instead of vague fitness advice.
+            </p>
+          </article>
+        </section>
+
+        <section class="story-section">
+          <div class="story-copy">
+            <p class="eyebrow">Software-first experience</p>
+            <h2>A training review tool, not a wearable or gadget.</h2>
+            <p>
+              This version is centered on async analysis: upload a finished set,
+              get a readable summary, and inspect the moments where your
+              mechanics shift. It fits naturally into gym sessions, remote
+              coaching, and self-review after each set.
+            </p>
+          </div>
+          <div class="story-grid">
+            <article>
+              <strong>Summary</strong>
+              <span>Exercise identification, reps counted, performance level</span>
+            </article>
+            <article>
+              <strong>Frame insights</strong>
+              <span>Setup, bottom position, lockout, and breakdown moments</span>
+            </article>
+            <article>
+              <strong>Corrections</strong>
+              <span>Simple, coach-style cues tied to visible problems</span>
+            </article>
+            <article>
+              <strong>Future live mode</strong>
+              <span>Real-time camera coaching can grow from the same engine</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="future-section" id="future-live">
+          <div class="future-copy">
+            <p class="eyebrow">Future live usage</p>
+            <h2>Where this can go next</h2>
+            <p>
+              Today the product reviews uploaded videos. In the future, the same
+              movement engine can support live camera guidance during training,
+              with instant posture alerts, rep tracking, and voice cues while
+              you lift.
+            </p>
+          </div>
+          <div class="future-grid">
+            <article>
+              <strong>Live camera mode</strong>
+              <span>Use your phone camera for immediate feedback between reps</span>
+            </article>
+            <article>
+              <strong>Real-time correction cues</strong>
+              <span>Hear simple prompts like “brace sooner” or “knees out”</span>
+            </article>
+            <article>
+              <strong>Coach dashboard</strong>
+              <span>Remote coaches can review flagged frames and track progress</span>
+            </article>
+            <article>
+              <strong>Training history</strong>
+              <span>See how depth, symmetry, and consistency improve over time</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="prompt-panel">
+          <div class="panel-heading">
+            <p class="section-tag">Prompt Engine</p>
+            <h2>Integrated analysis instruction set</h2>
+            <p>
+              The report structure still follows your GymBuddy Pro analysis
+              prompt.
+            </p>
+          </div>
+          <details>
+            <summary>Show integrated prompt</summary>
+            <pre id="prompt-display" class="prompt-display"></pre>
+          </details>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
