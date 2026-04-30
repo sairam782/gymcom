@@ -8,7 +8,7 @@ import cv2
 from anthropic import Anthropic
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 
 
 PROMPT = """
@@ -109,6 +109,7 @@ MODEL_NAME = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
 SECONDS_PER_FRAME = float(os.getenv("GYMBUDDY_SECONDS_PER_FRAME", "2"))
 MAX_MODEL_FRAMES = int(os.getenv("GYMBUDDY_MAX_MODEL_FRAMES", "12"))
 MAX_PREVIEW_FRAMES = int(os.getenv("GYMBUDDY_MAX_PREVIEW_FRAMES", "3"))
+BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title="GymBuddy Vision API")
 app.add_middleware(
@@ -194,7 +195,8 @@ def healthcheck() -> dict:
 def root() -> str:
     return (
         "GymBuddy Vision backend is running.\n\n"
-        "Use the website at index.html and upload a video there.\n"
+        "Frontend entry: GET /app or /app/live.html\n"
+        "You can also open the raw local index.html file directly.\n"
         "The frontend sends files to POST /api/analyze.\n"
         "Health check: GET /api/health\n"
     )
@@ -203,6 +205,21 @@ def root() -> str:
 @app.get("/favicon.ico")
 def favicon() -> Response:
     return Response(status_code=204)
+
+
+@app.get("/app", response_class=FileResponse)
+def app_index() -> FileResponse:
+    return FileResponse(BASE_DIR / "index.html")
+
+
+@app.get("/app/{path:path}", response_class=FileResponse)
+def serve_app_file(path: str) -> FileResponse:
+    requested = (BASE_DIR / path).resolve()
+    if BASE_DIR not in requested.parents and requested != BASE_DIR:
+        raise HTTPException(status_code=403, detail="Path is outside the app directory.")
+    if not requested.is_file():
+        raise HTTPException(status_code=404, detail="Requested file was not found.")
+    return FileResponse(requested)
 
 
 @app.post("/api/analyze")

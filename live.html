@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GymBuddy Vision Live</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="brand-mark">GymBuddy Vision Live</div>
+        <nav class="topnav">
+          <a href="./index.html">Upload analyzer</a>
+          <a href="#live-lab">Live lab</a>
+          <a href="#claude-plan">Claude plan</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="live-session-bar">
+          <div class="session-pill">Live session</div>
+          <div class="session-pill">Software only</div>
+          <div class="session-pill">No wearable required</div>
+          <div class="session-pill">Browser-based kinematic tracking</div>
+        </section>
+
+        <section class="hero live-hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Real-time movement coaching</p>
+            <h1>
+              Track reps live.
+              <span>Score form while the set is happening.</span>
+            </h1>
+            <p class="hero-text">
+              GymBuddy Vision uses browser-based computer vision to analyze
+              movement in real time, estimate joint angles, and deliver instant
+              corrective cues. No gadget, sensor, or wearable is required. After
+              the set, the saved clip can be sent to Claude for a deeper written
+              report.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-link" href="#live-lab">Open live lab</a>
+              <a class="secondary-button" href="#claude-plan">See Claude workflow</a>
+            </div>
+          </div>
+
+          <aside class="hero-card">
+            <div class="hero-card-head">
+              <span>How this works</span>
+              <strong>Realtime tracking + post-set reasoning</strong>
+            </div>
+            <div class="hero-stack">
+              <article>
+                <span>Kinematic loop</span>
+                <strong>Joint angle tracking, rep count, live phase</strong>
+              </article>
+              <article>
+                <span>Guidance layer</span>
+                <strong>Immediate form cues and positioning feedback</strong>
+              </article>
+              <article>
+                <span>Claude handoff</span>
+                <strong>Natural language feedback and automated performance digest</strong>
+              </article>
+            </div>
+          </aside>
+        </section>
+
+        <section class="panel live-panel" id="live-lab">
+          <div class="panel-heading">
+            <p class="section-tag">Live Lab</p>
+            <h2>Exercise selection and live camera mode</h2>
+            <p>
+              This page gives you the separate live-interaction surface you
+              asked for. The webcam runs locally and the dashboard shows reps,
+              phase, and form score in a software-only live kinematic flow.
+            </p>
+          </div>
+
+          <div class="live-grid">
+            <section class="live-controls">
+              <label>
+                Exercise
+                <select id="live-exercise">
+                  <option value="bodyweight-squat">Bodyweight squat</option>
+                  <option value="reverse-lunge">Reverse lunge</option>
+                  <option value="bulgarian-split-squat">Bulgarian split squat</option>
+                  <option value="step-up">Step-up</option>
+                  <option value="leg-press">Leg press</option>
+                  <option value="glute-bridge">Glute bridge</option>
+                  <option value="hip-thrust">Hip thrust</option>
+                  <option value="romanian-deadlift">Romanian deadlift</option>
+                  <option value="deadlift">Deadlift</option>
+                  <option value="good-morning">Good morning</option>
+                  <option value="push-up">Push-up</option>
+                  <option value="bench-press">Bench press</option>
+                  <option value="overhead-press">Overhead press</option>
+                  <option value="pike-push-up">Pike push-up</option>
+                  <option value="tricep-dip">Tricep dip</option>
+                  <option value="bicep-curl">Bicep curl</option>
+                  <option value="hammer-curl">Hammer curl</option>
+                  <option value="lateral-raise">Lateral raise</option>
+                  <option value="front-raise">Front raise</option>
+                  <option value="pull-up">Pull-up</option>
+                  <option value="lat-pulldown">Lat pulldown</option>
+                  <option value="seated-row">Seated row</option>
+                  <option value="superman-hold">Superman hold</option>
+                  <option value="plank">Plank</option>
+                </select>
+              </label>
+
+              <label>
+                Camera angle
+                <select id="live-angle">
+                  <option value="side">Side</option>
+                  <option value="front">Front</option>
+                  <option value="three-quarter">45°</option>
+                </select>
+              </label>
+
+              <label>
+                Model profile
+                <select id="live-model">
+                  <option value="heavy">Best accuracy (Heavy)</option>
+                  <option value="full">Balanced (Full)</option>
+                  <option value="lite">Fastest (Lite)</option>
+                </select>
+              </label>
+
+              <div class="action-row">
+                <button id="start-live" class="primary-button" type="button">
+                  Start camera
+                </button>
+                <button id="stop-live" class="secondary-button" type="button">
+                  Stop camera
+                </button>
+              </div>
+
+              <div class="live-status" id="live-status">
+                Camera idle. Start live mode to begin browser-based pose tracking.
+              </div>
+
+              <div class="live-metrics-grid">
+                <article class="metric-card">
+                  <span>Reps</span>
+                  <strong id="live-reps">0</strong>
+                </article>
+                <article class="metric-card">
+                  <span>Current phase</span>
+                  <strong id="live-phase">Ready</strong>
+                </article>
+                <article class="metric-card">
+                  <span>Form score</span>
+                  <strong id="live-score">--</strong>
+                </article>
+                <article class="metric-card">
+                  <span>Tracking confidence</span>
+                  <strong id="live-confidence">--</strong>
+                </article>
+                <article class="metric-card">
+                  <span>Primary cue</span>
+                  <strong id="live-cue">Select an exercise</strong>
+                </article>
+                <article class="metric-card">
+                  <span id="left-angle-label">Left angle</span>
+                  <strong id="left-knee-angle">--</strong>
+                </article>
+                <article class="metric-card">
+                  <span id="right-angle-label">Right angle</span>
+                  <strong id="right-knee-angle">--</strong>
+                </article>
+              </div>
+
+              <div class="report-card live-clinical-note">
+                <div class="report-label">Clinical note</div>
+                <p class="coach-feedback">
+                  This is a movement coaching tool, not a diagnostic medical
+                  device. It is best used for exercise feedback, progress
+                  monitoring, and technique review.
+                </p>
+              </div>
+
+              <div class="report-card live-session-digest">
+                <div class="report-label">Live session digest</div>
+                <div class="live-digest-grid">
+                  <article>
+                    <span>Target depth</span>
+                    <strong id="live-depth">--</strong>
+                  </article>
+                  <article>
+                    <span>Best symmetry</span>
+                    <strong id="live-symmetry">--</strong>
+                  </article>
+                  <article>
+                    <span>Stable frames</span>
+                    <strong id="live-stable">--</strong>
+                  </article>
+                  <article>
+                    <span>Model</span>
+                    <strong id="live-model-badge">Heavy</strong>
+                  </article>
+                </div>
+                <p class="coach-feedback" id="live-summary">
+                  Start the camera and stand fully inside frame to begin live
+                  kinematic tracking.
+                </p>
+              </div>
+            </section>
+
+            <section class="live-camera-shell">
+              <div class="preview-shell live-preview">
+                <video id="live-video" autoplay muted playsinline></video>
+                <canvas id="live-overlay" class="live-overlay"></canvas>
+                <div class="live-overlay-badge" id="live-overlay-badge">
+                  Align full body inside frame
+                </div>
+                <div class="preview-empty" id="live-preview-empty">
+                  <p>Camera not started</p>
+                  <span>Live tracking will appear here.</span>
+                </div>
+              </div>
+
+              <div class="report-card live-notes-card">
+                <div class="report-label">How this should work for real</div>
+                <ul class="report-list">
+                  <li>MediaPipe BlazePose GHUM runs in the browser and tracks a 33-landmark full-body skeleton.</li>
+                  <li>The selected exercise maps to a primary joint chain, preferred camera view, and top/bottom angle targets.</li>
+                  <li>Instant cues come from joint range, symmetry, and body positioning rules.</li>
+                  <li>Send saved clips or sampled frames to Claude for the final deep report.</li>
+                </ul>
+              </div>
+
+              <div class="live-sidebar-grid">
+                <article class="report-card assistant-card">
+                  <div class="report-label">AI physical therapist</div>
+                  <p class="coach-feedback">
+                    Complete a clean rep to receive more specific cues. If
+                    tracking is weak, the system will first help the user fix
+                    camera positioning.
+                  </p>
+                </article>
+
+                <article class="report-card assistant-card">
+                  <div class="report-label">Automated digest</div>
+                  <p class="coach-feedback">
+                    After the session, GymBuddy can summarize reps, range,
+                    symmetry, and form trends for coaches or clinicians to
+                    review asynchronously.
+                  </p>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="past-reports-section" id="claude-plan">
+          <div class="panel-heading">
+            <p class="section-tag">Claude plan</p>
+            <h2>How to use the Claude API key in a smart way</h2>
+            <p>
+              Claude should not be your millisecond-by-millisecond tracker.
+              Instead, use live browser pose estimation for speed, then hand the
+              tracked metrics or saved clip to Claude for richer narrative
+              feedback.
+            </p>
+          </div>
+
+          <div class="past-reports-grid live-idea-grid">
+            <article class="past-report-card active-report">
+              <span>Live step 1</span>
+              <strong>Run MediaPipe Pose locally</strong>
+              <p>
+                Use a browser pose model for constant landmark and 3D keypoint
+                updates, then compute depth, symmetry, and joint range from
+                those landmarks.
+              </p>
+            </article>
+            <article class="past-report-card">
+              <span>Live step 2</span>
+              <strong>Count reps from angle thresholds</strong>
+              <p>
+                For each selected exercise, define a top angle, bottom angle,
+                and phase rules. That is how reps and live form score appear in
+                real time.
+              </p>
+            </article>
+            <article class="past-report-card">
+              <span>Claude step 3</span>
+              <strong>Send a clip after the set</strong>
+              <p>
+                Save a short clip or sampled frames, then send them to Claude
+                together with tracked metrics so it can produce a cleaner final
+                report with less guessing.
+              </p>
+            </article>
+          </div>
+
+          <div class="report-card wide-card">
+            <div class="report-label">Recommended architecture</div>
+            <ul class="report-list">
+              <li>Frontend live page: accessible, high-contrast interface with exercise selector and guidance cards.</li>
+              <li>Browser computer vision: MediaPipe Pose GHUM for full-body landmarks, kinematic analysis, and instant corrective cues.</li>
+              <li>Exercise rules: angle targets, rep-state machine, and left/right symmetry checks.</li>
+              <li>Backend save: store rep counts, angle history, sampled frames, and session metadata.</li>
+              <li>Claude API: turn raw movement data into natural-language reports and automated performance digests.</li>
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+    <script src="./live.js"></script>
+  </body>
+</html>

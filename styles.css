@@ -10,6 +10,10 @@
   --accent: #c08b5c;
   --accent-soft: #ead8c2;
   --accent-deep: #8d6541;
+  --clinical: #24324d;
+  --clinical-soft: #31405d;
+  --signal: #40d3a8;
+  --signal-soft: rgba(64, 211, 168, 0.16);
   --shadow: 0 18px 50px rgba(95, 72, 48, 0.09);
 }
 
@@ -294,6 +298,10 @@ select {
 .hero-card-note {
   margin: 20px 0 0;
   line-height: 1.7;
+}
+
+.future-actions {
+  margin-top: 24px;
 }
 
 .feature-band,
@@ -630,6 +638,196 @@ td {
   justify-content: center;
 }
 
+.live-hero {
+  align-items: start;
+}
+
+.live-session-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.session-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 50, 77, 0.12);
+  background: rgba(255, 250, 244, 0.9);
+  color: var(--clinical);
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 10px 24px rgba(36, 50, 77, 0.06);
+}
+
+.live-panel {
+  margin-top: 24px;
+}
+
+.live-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.live-controls,
+.live-camera-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.live-controls label {
+  display: grid;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.live-controls select {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  color: var(--text);
+}
+
+.live-status {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(36, 50, 77, 0.12);
+  background: rgba(36, 50, 77, 0.06);
+  color: var(--clinical);
+  line-height: 1.65;
+}
+
+.live-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.metric-card {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 251, 246, 0.95), rgba(247, 239, 228, 0.95));
+  box-shadow: var(--shadow);
+}
+
+.metric-card span {
+  display: block;
+  color: var(--clinical-soft);
+  font-size: 0.9rem;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.45rem;
+  color: var(--clinical);
+}
+
+.live-preview {
+  aspect-ratio: 16 / 10;
+  position: relative;
+  border: 1px solid rgba(36, 50, 77, 0.12);
+  background:
+    linear-gradient(180deg, rgba(36, 50, 77, 0.88), rgba(44, 59, 88, 0.94)),
+    radial-gradient(circle at top left, rgba(64, 211, 168, 0.18), transparent 30%);
+}
+
+#live-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.live-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+.live-overlay-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  max-width: min(62%, 360px);
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(17, 24, 39, 0.58);
+  color: #f8f7f2;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10px);
+  line-height: 1.4;
+  z-index: 2;
+}
+
+.live-overlay-badge[data-kind="good"] {
+  background: rgba(20, 77, 66, 0.64);
+  border-color: rgba(64, 211, 168, 0.32);
+}
+
+.live-overlay-badge[data-kind="warn"] {
+  background: rgba(107, 62, 23, 0.7);
+  border-color: rgba(255, 219, 185, 0.3);
+}
+
+.live-clinical-note,
+.assistant-card,
+.live-session-digest {
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0.98), rgba(246, 238, 228, 0.94));
+}
+
+.live-session-digest {
+  display: grid;
+  gap: 16px;
+}
+
+.live-digest-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.live-digest-grid article {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(36, 50, 77, 0.1);
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.live-digest-grid span {
+  display: block;
+  color: var(--clinical-soft);
+  font-size: 0.82rem;
+}
+
+.live-digest-grid strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--clinical);
+  font-size: 1.1rem;
+}
+
+.live-sidebar-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.assistant-card {
+  min-height: 100%;
+}
+
+.live-idea-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .score-value {
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(3rem, 6vw, 4.8rem);
@@ -702,7 +900,10 @@ summary {
   .story-grid,
   .future-grid,
   .past-reports-grid,
-  .intake-row {
+  .intake-row,
+  .live-grid,
+  .live-idea-grid,
+  .live-sidebar-grid {
     grid-template-columns: 1fr;
   }
 
@@ -739,7 +940,16 @@ summary {
   .input-grid,
   .report-grid,
   .frame-grid,
-  .action-row {
+  .action-row,
+  .live-metrics-grid {
     grid-template-columns: 1fr;
+  }
+
+  .live-digest-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .live-overlay-badge {
+    max-width: calc(100% - 32px);
   }
 }
