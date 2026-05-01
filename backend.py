@@ -191,13 +191,18 @@ def healthcheck() -> dict:
     return {"ok": True}
 
 
-@app.get("/", response_class=PlainTextResponse)
-def root() -> str:
+@app.get("/", response_class=FileResponse)
+def root() -> FileResponse:
+    return FileResponse(BASE_DIR / "index.html")
+
+
+@app.get("/api", response_class=PlainTextResponse)
+def api_root() -> str:
     return (
-        "GymBuddy Vision backend is running.\n\n"
-        "Frontend entry: GET /app or /app/live.html\n"
-        "You can also open the raw local index.html file directly.\n"
-        "The frontend sends files to POST /api/analyze.\n"
+        "GymBuddy Vision API is running.\n\n"
+        "Frontend: GET /\n"
+        "Live page: GET /live.html\n"
+        "Analyze endpoint: POST /api/analyze\n"
         "Health check: GET /api/health\n"
     )
 
@@ -277,3 +282,13 @@ async def analyze_video(file: UploadFile = File(...)) -> JSONResponse:
         )
     finally:
         shutil.rmtree(workspace, ignore_errors=True)
+
+
+@app.get("/{path:path}", response_class=FileResponse)
+def serve_frontend_file(path: str) -> FileResponse:
+    requested = (BASE_DIR / path).resolve()
+    if BASE_DIR not in requested.parents and requested != BASE_DIR:
+        raise HTTPException(status_code=403, detail="Path is outside the app directory.")
+    if not requested.is_file():
+        raise HTTPException(status_code=404, detail="Requested file was not found.")
+    return FileResponse(requested)

@@ -22,6 +22,12 @@ const liveStable = document.querySelector("#live-stable");
 const liveModelBadge = document.querySelector("#live-model-badge");
 const liveSummary = document.querySelector("#live-summary");
 const liveOverlayBadge = document.querySelector("#live-overlay-badge");
+const exerciseCategory = document.querySelector("#exercise-category");
+const exerciseEquipment = document.querySelector("#exercise-equipment");
+const exerciseJoint = document.querySelector("#exercise-joint");
+const exerciseRange = document.querySelector("#exercise-range");
+const exerciseView = document.querySelector("#exercise-view");
+const exerciseChain = document.querySelector("#exercise-chain");
 
 const ctx = liveOverlay.getContext("2d");
 
@@ -47,8 +53,43 @@ const BLAZEPOSE_SOLUTION_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/pose";
 
 const FACE_KEYWORDS = ["nose", "eye", "ear", "mouth"];
 
+const CHAIN_LABELS = {
+  hip: "Hip",
+  knee: "Knee",
+  ankle: "Ankle",
+  shoulder: "Shoulder",
+  elbow: "Elbow",
+  wrist: "Wrist"
+};
+
+function defineExercise({
+  category,
+  equipment,
+  joint,
+  top,
+  bottom,
+  chain,
+  label,
+  cue,
+  bestView
+}) {
+  return {
+    category,
+    equipment,
+    joint,
+    top,
+    bottom,
+    chain,
+    label,
+    cue,
+    bestView
+  };
+}
+
 const EXERCISE_PROFILES = {
-  "bodyweight-squat": {
+  "bodyweight-squat": defineExercise({
+    category: "Home workout",
+    equipment: "Bodyweight",
     joint: "knee",
     top: 165,
     bottom: 90,
@@ -56,8 +97,10 @@ const EXERCISE_PROFILES = {
     label: "Knee angle",
     cue: "Sit deeper while keeping knees stacked over the mid-foot.",
     bestView: "side"
-  },
-  "reverse-lunge": {
+  }),
+  "reverse-lunge": defineExercise({
+    category: "Home workout",
+    equipment: "Bodyweight",
     joint: "knee",
     top: 162,
     bottom: 90,
@@ -65,8 +108,10 @@ const EXERCISE_PROFILES = {
     label: "Knee angle",
     cue: "Drop until the front knee reaches roughly 90 degrees.",
     bestView: "side"
-  },
-  "bulgarian-split-squat": {
+  }),
+  "bulgarian-split-squat": defineExercise({
+    category: "Home workout",
+    equipment: "Bench or chair",
     joint: "knee",
     top: 160,
     bottom: 80,
@@ -74,8 +119,10 @@ const EXERCISE_PROFILES = {
     label: "Knee angle",
     cue: "Control the front knee angle and stay tall through the torso.",
     bestView: "side"
-  },
-  "step-up": {
+  }),
+  "step-up": defineExercise({
+    category: "Home workout",
+    equipment: "Box or bench",
     joint: "knee",
     top: 162,
     bottom: 90,
@@ -83,17 +130,10 @@ const EXERCISE_PROFILES = {
     label: "Knee angle",
     cue: "Drive through the working leg until the knee fully opens.",
     bestView: "side"
-  },
-  "leg-press": {
-    joint: "knee",
-    top: 168,
-    bottom: 80,
-    chain: ["hip", "knee", "ankle"],
-    label: "Knee angle",
-    cue: "Use a little more depth before pressing back out.",
-    bestView: "side"
-  },
-  "glute-bridge": {
+  }),
+  "glute-bridge": defineExercise({
+    category: "Home workout",
+    equipment: "Bodyweight",
     joint: "hip",
     top: 175,
     bottom: 80,
@@ -101,44 +141,10 @@ const EXERCISE_PROFILES = {
     label: "Hip angle",
     cue: "Finish taller at the hip without flaring the ribs.",
     bestView: "side"
-  },
-  "hip-thrust": {
-    joint: "hip",
-    top: 175,
-    bottom: 85,
-    chain: ["shoulder", "hip", "knee"],
-    label: "Hip angle",
-    cue: "Drive to full hip extension and keep the ribs down.",
-    bestView: "side"
-  },
-  "romanian-deadlift": {
-    joint: "hip",
-    top: 172,
-    bottom: 105,
-    chain: ["shoulder", "hip", "knee"],
-    label: "Hip angle",
-    cue: "Push the hips back farther while keeping the spine long.",
-    bestView: "side"
-  },
-  deadlift: {
-    joint: "hip",
-    top: 175,
-    bottom: 95,
-    chain: ["shoulder", "hip", "knee"],
-    label: "Hip angle",
-    cue: "Clean up the hinge and finish tall without leaning back.",
-    bestView: "side"
-  },
-  "good-morning": {
-    joint: "hip",
-    top: 172,
-    bottom: 105,
-    chain: ["shoulder", "hip", "knee"],
-    label: "Hip angle",
-    cue: "Hinge deeper through the hips before reversing the motion.",
-    bestView: "side"
-  },
-  "push-up": {
+  }),
+  "push-up": defineExercise({
+    category: "Home workout",
+    equipment: "Bodyweight",
     joint: "elbow",
     top: 168,
     bottom: 80,
@@ -146,26 +152,10 @@ const EXERCISE_PROFILES = {
     label: "Elbow angle",
     cue: "Lower farther and keep the elbows under control.",
     bestView: "side"
-  },
-  "bench-press": {
-    joint: "elbow",
-    top: 168,
-    bottom: 80,
-    chain: ["shoulder", "elbow", "wrist"],
-    label: "Elbow angle",
-    cue: "Use more elbow bend at the bottom before pressing up.",
-    bestView: "side"
-  },
-  "overhead-press": {
-    joint: "elbow",
-    top: 170,
-    bottom: 90,
-    chain: ["shoulder", "elbow", "wrist"],
-    label: "Elbow angle",
-    cue: "Start from a stronger rack and finish with the arm more vertical.",
-    bestView: "front"
-  },
-  "pike-push-up": {
+  }),
+  "pike-push-up": defineExercise({
+    category: "Home workout",
+    equipment: "Bodyweight",
     joint: "shoulder",
     top: 170,
     bottom: 80,
@@ -173,8 +163,10 @@ const EXERCISE_PROFILES = {
     label: "Shoulder angle",
     cue: "Drop deeper through the shoulder line before driving back up.",
     bestView: "side"
-  },
-  "tricep-dip": {
+  }),
+  "tricep-dip": defineExercise({
+    category: "Home workout",
+    equipment: "Chair or bench",
     joint: "elbow",
     top: 160,
     bottom: 85,
@@ -182,71 +174,10 @@ const EXERCISE_PROFILES = {
     label: "Elbow angle",
     cue: "Control the bottom and reach slightly more elbow bend.",
     bestView: "side"
-  },
-  "bicep-curl": {
-    joint: "elbow",
-    top: 150,
-    bottom: 40,
-    chain: ["shoulder", "elbow", "wrist"],
-    label: "Elbow angle",
-    cue: "Finish the curl higher and avoid swinging at the shoulder.",
-    bestView: "front"
-  },
-  "hammer-curl": {
-    joint: "elbow",
-    top: 150,
-    bottom: 40,
-    chain: ["shoulder", "elbow", "wrist"],
-    label: "Elbow angle",
-    cue: "Keep the elbows quieter and finish the curl fully.",
-    bestView: "front"
-  },
-  "lateral-raise": {
-    joint: "shoulder",
-    top: 90,
-    bottom: 10,
-    chain: ["hip", "shoulder", "elbow"],
-    label: "Shoulder angle",
-    cue: "Lift to shoulder height without leaning the trunk.",
-    bestView: "front"
-  },
-  "front-raise": {
-    joint: "shoulder",
-    top: 90,
-    bottom: 10,
-    chain: ["hip", "shoulder", "elbow"],
-    label: "Shoulder angle",
-    cue: "Raise higher without using momentum from the torso.",
-    bestView: "side"
-  },
-  "pull-up": {
-    joint: "elbow",
-    top: 150,
-    bottom: 45,
-    chain: ["shoulder", "elbow", "wrist"],
-    label: "Elbow angle",
-    cue: "Finish with more elbow bend at the top position.",
-    bestView: "side"
-  },
-  "lat-pulldown": {
-    joint: "elbow",
-    top: 150,
-    bottom: 55,
-    chain: ["shoulder", "elbow", "wrist"],
-    label: "Elbow angle",
-    cue: "Drive the elbows lower before letting the bar return.",
-    bestView: "front"
-  },
-  "seated-row": {
-    joint: "elbow",
-    top: 150,
-    bottom: 75,
-    chain: ["shoulder", "elbow", "wrist"],
-    label: "Elbow angle",
-    cue: "Finish the row with more elbow travel and less shoulder shrug.",
-    bestView: "front"
-  },
-  "superman-hold": {
+  }),
+  "superman-hold": defineExercise({
+    category: "Home workout",
+    equipment: "Bodyweight",
     joint: "hip",
     top: 175,
     bottom: 140,
@@ -254,8 +185,10 @@ const EXERCISE_PROFILES = {
     label: "Hip angle",
     cue: "Reach longer through the legs and lift through the hip line.",
     bestView: "side"
-  },
-  plank: {
+  }),
+  plank: defineExercise({
+    category: "Home workout",
+    equipment: "Bodyweight",
     joint: "spine",
     top: 180,
     bottom: 180,
@@ -263,7 +196,194 @@ const EXERCISE_PROFILES = {
     label: "Body line",
     cue: "Keep shoulders, hips, and ankles in one long line.",
     bestView: "side"
-  }
+  }),
+  "goblet-squat": defineExercise({
+    category: "Gym workout",
+    equipment: "Dumbbell or kettlebell",
+    joint: "knee",
+    top: 165,
+    bottom: 88,
+    chain: ["hip", "knee", "ankle"],
+    label: "Knee angle",
+    cue: "Reach parallel depth while keeping the chest proud.",
+    bestView: "side"
+  }),
+  "leg-press": defineExercise({
+    category: "Gym workout",
+    equipment: "Leg press machine",
+    joint: "knee",
+    top: 168,
+    bottom: 80,
+    chain: ["hip", "knee", "ankle"],
+    label: "Knee angle",
+    cue: "Use a little more depth before pressing back out.",
+    bestView: "side"
+  }),
+  "hip-thrust": defineExercise({
+    category: "Gym workout",
+    equipment: "Barbell or machine",
+    joint: "hip",
+    top: 175,
+    bottom: 85,
+    chain: ["shoulder", "hip", "knee"],
+    label: "Hip angle",
+    cue: "Drive to full hip extension and keep the ribs down.",
+    bestView: "side"
+  }),
+  "romanian-deadlift": defineExercise({
+    category: "Gym workout",
+    equipment: "Barbell or dumbbells",
+    joint: "hip",
+    top: 172,
+    bottom: 105,
+    chain: ["shoulder", "hip", "knee"],
+    label: "Hip angle",
+    cue: "Push the hips back farther while keeping the spine long.",
+    bestView: "side"
+  }),
+  deadlift: defineExercise({
+    category: "Gym workout",
+    equipment: "Barbell",
+    joint: "hip",
+    top: 175,
+    bottom: 95,
+    chain: ["shoulder", "hip", "knee"],
+    label: "Hip angle",
+    cue: "Clean up the hinge and finish tall without leaning back.",
+    bestView: "side"
+  }),
+  "good-morning": defineExercise({
+    category: "Gym workout",
+    equipment: "Barbell",
+    joint: "hip",
+    top: 172,
+    bottom: 105,
+    chain: ["shoulder", "hip", "knee"],
+    label: "Hip angle",
+    cue: "Hinge deeper through the hips before reversing the motion.",
+    bestView: "side"
+  }),
+  "bench-press": defineExercise({
+    category: "Gym workout",
+    equipment: "Barbell or dumbbells",
+    joint: "elbow",
+    top: 168,
+    bottom: 80,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Use more elbow bend at the bottom before pressing up.",
+    bestView: "side"
+  }),
+  "machine-chest-press": defineExercise({
+    category: "Gym workout",
+    equipment: "Chest press machine",
+    joint: "elbow",
+    top: 168,
+    bottom: 82,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Allow a little more controlled elbow bend before pressing out.",
+    bestView: "side"
+  }),
+  "overhead-press": defineExercise({
+    category: "Gym workout",
+    equipment: "Barbell or dumbbells",
+    joint: "elbow",
+    top: 170,
+    bottom: 90,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Start from a stronger rack and finish with the arm more vertical.",
+    bestView: "front"
+  }),
+  "bicep-curl": defineExercise({
+    category: "Gym workout",
+    equipment: "Dumbbells or cable",
+    joint: "elbow",
+    top: 150,
+    bottom: 40,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Finish the curl higher and avoid swinging at the shoulder.",
+    bestView: "front"
+  }),
+  "hammer-curl": defineExercise({
+    category: "Gym workout",
+    equipment: "Dumbbells",
+    joint: "elbow",
+    top: 150,
+    bottom: 40,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Keep the elbows quieter and finish the curl fully.",
+    bestView: "front"
+  }),
+  "tricep-pushdown": defineExercise({
+    category: "Gym workout",
+    equipment: "Cable machine",
+    joint: "elbow",
+    top: 155,
+    bottom: 45,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Finish each rep with stronger elbow extension.",
+    bestView: "front"
+  }),
+  "lateral-raise": defineExercise({
+    category: "Gym workout",
+    equipment: "Dumbbells or cable",
+    joint: "shoulder",
+    top: 90,
+    bottom: 10,
+    chain: ["hip", "shoulder", "elbow"],
+    label: "Shoulder angle",
+    cue: "Lift to shoulder height without leaning the trunk.",
+    bestView: "front"
+  }),
+  "front-raise": defineExercise({
+    category: "Gym workout",
+    equipment: "Dumbbells or plate",
+    joint: "shoulder",
+    top: 90,
+    bottom: 10,
+    chain: ["hip", "shoulder", "elbow"],
+    label: "Shoulder angle",
+    cue: "Raise higher without using momentum from the torso.",
+    bestView: "side"
+  }),
+  "pull-up": defineExercise({
+    category: "Gym workout",
+    equipment: "Pull-up bar",
+    joint: "elbow",
+    top: 150,
+    bottom: 45,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Finish with more elbow bend at the top position.",
+    bestView: "side"
+  }),
+  "lat-pulldown": defineExercise({
+    category: "Gym workout",
+    equipment: "Cable machine",
+    joint: "elbow",
+    top: 150,
+    bottom: 55,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Drive the elbows lower before letting the bar return.",
+    bestView: "front"
+  }),
+  "seated-row": defineExercise({
+    category: "Gym workout",
+    equipment: "Cable or row machine",
+    joint: "elbow",
+    top: 150,
+    bottom: 75,
+    chain: ["shoulder", "elbow", "wrist"],
+    label: "Elbow angle",
+    cue: "Finish the row with more elbow travel and less shoulder shrug.",
+    bestView: "front"
+  })
 };
 
 const BASE_SKELETON_EDGES = [
@@ -727,11 +847,36 @@ function updateSummary(angles, phase, depthRatio, positionResult, form) {
   liveSummary.textContent = `Live read: ${phase.toLowerCase()} with ${depthText}, ${symmetryGap} left/right gap, and form score ${form.score}/10.`;
 }
 
+function formatChain(chain) {
+  return chain.map((joint) => CHAIN_LABELS[joint] || joint).join(" -> ");
+}
+
+function formatView(view) {
+  if (view === "three-quarter") {
+    return "45°";
+  }
+  return view.charAt(0).toUpperCase() + view.slice(1);
+}
+
+function formatRange(currentProfile) {
+  if (currentProfile.top === currentProfile.bottom) {
+    return `Hold near ${currentProfile.top}°`;
+  }
+  return `${currentProfile.top}° to ${currentProfile.bottom}°`;
+}
+
 function updateAngleLabels() {
-  const label = profile().label;
+  const currentProfile = profile();
+  const label = currentProfile.label;
   leftAngleLabel.textContent = `Left ${label}`;
   rightAngleLabel.textContent = `Right ${label}`;
   liveModelBadge.textContent = liveModel.value.charAt(0).toUpperCase() + liveModel.value.slice(1);
+  exerciseCategory.textContent = currentProfile.category;
+  exerciseEquipment.textContent = currentProfile.equipment;
+  exerciseJoint.textContent = currentProfile.label;
+  exerciseRange.textContent = formatRange(currentProfile);
+  exerciseView.textContent = formatView(currentProfile.bestView);
+  exerciseChain.textContent = formatChain(currentProfile.chain);
 }
 
 function resetLiveReadout() {
@@ -739,7 +884,7 @@ function resetLiveReadout() {
   livePhase.textContent = "Ready";
   liveScore.textContent = "--";
   liveConfidence.textContent = "--";
-  liveCue.textContent = "Select an exercise";
+  liveCue.textContent = profile().cue;
   leftAngleEl.textContent = "--";
   rightAngleEl.textContent = "--";
   liveDepth.textContent = "--";

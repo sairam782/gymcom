@@ -89,30 +89,37 @@
               <label>
                 Exercise
                 <select id="live-exercise">
-                  <option value="bodyweight-squat">Bodyweight squat</option>
-                  <option value="reverse-lunge">Reverse lunge</option>
-                  <option value="bulgarian-split-squat">Bulgarian split squat</option>
-                  <option value="step-up">Step-up</option>
-                  <option value="leg-press">Leg press</option>
-                  <option value="glute-bridge">Glute bridge</option>
-                  <option value="hip-thrust">Hip thrust</option>
-                  <option value="romanian-deadlift">Romanian deadlift</option>
-                  <option value="deadlift">Deadlift</option>
-                  <option value="good-morning">Good morning</option>
-                  <option value="push-up">Push-up</option>
-                  <option value="bench-press">Bench press</option>
-                  <option value="overhead-press">Overhead press</option>
-                  <option value="pike-push-up">Pike push-up</option>
-                  <option value="tricep-dip">Tricep dip</option>
-                  <option value="bicep-curl">Bicep curl</option>
-                  <option value="hammer-curl">Hammer curl</option>
-                  <option value="lateral-raise">Lateral raise</option>
-                  <option value="front-raise">Front raise</option>
-                  <option value="pull-up">Pull-up</option>
-                  <option value="lat-pulldown">Lat pulldown</option>
-                  <option value="seated-row">Seated row</option>
-                  <option value="superman-hold">Superman hold</option>
-                  <option value="plank">Plank</option>
+                  <optgroup label="Home workout">
+                    <option value="bodyweight-squat">Bodyweight squat</option>
+                    <option value="reverse-lunge">Reverse lunge</option>
+                    <option value="bulgarian-split-squat">Bulgarian split squat</option>
+                    <option value="step-up">Step-up</option>
+                    <option value="glute-bridge">Glute bridge</option>
+                    <option value="push-up">Push-up</option>
+                    <option value="pike-push-up">Pike push-up</option>
+                    <option value="tricep-dip">Tricep dip</option>
+                    <option value="superman-hold">Superman hold</option>
+                    <option value="plank">Plank</option>
+                  </optgroup>
+                  <optgroup label="Gym workout">
+                    <option value="goblet-squat">Goblet squat</option>
+                    <option value="leg-press">Leg press</option>
+                    <option value="hip-thrust">Hip thrust</option>
+                    <option value="romanian-deadlift">Romanian deadlift</option>
+                    <option value="deadlift">Deadlift</option>
+                    <option value="good-morning">Good morning</option>
+                    <option value="bench-press">Bench press</option>
+                    <option value="machine-chest-press">Machine chest press</option>
+                    <option value="overhead-press">Overhead press</option>
+                    <option value="bicep-curl">Bicep curl</option>
+                    <option value="hammer-curl">Hammer curl</option>
+                    <option value="tricep-pushdown">Tricep pushdown</option>
+                    <option value="lateral-raise">Lateral raise</option>
+                    <option value="front-raise">Front raise</option>
+                    <option value="pull-up">Pull-up</option>
+                    <option value="lat-pulldown">Lat pulldown</option>
+                    <option value="seated-row">Seated row</option>
+                  </optgroup>
                 </select>
               </label>
 
@@ -141,6 +148,40 @@
                 <button id="stop-live" class="secondary-button" type="button">
                   Stop camera
                 </button>
+              </div>
+
+              <div class="report-card exercise-spec-card">
+                <div class="report-label">Selected exercise profile</div>
+                <p class="coach-feedback">
+                  This library is curated for movements that a single camera can
+                  track more cleanly in real time.
+                </p>
+                <div class="exercise-spec-grid">
+                  <article>
+                    <span>Category</span>
+                    <strong id="exercise-category">Home workout</strong>
+                  </article>
+                  <article>
+                    <span>Equipment</span>
+                    <strong id="exercise-equipment">Bodyweight</strong>
+                  </article>
+                  <article>
+                    <span>Tracked joint</span>
+                    <strong id="exercise-joint">Knee angle</strong>
+                  </article>
+                  <article>
+                    <span>Target range</span>
+                    <strong id="exercise-range">165° to 90°</strong>
+                  </article>
+                  <article>
+                    <span>Best camera view</span>
+                    <strong id="exercise-view">Side</strong>
+                  </article>
+                  <article>
+                    <span>Tracked chain</span>
+                    <strong id="exercise-chain">Hip -> Knee -> Ankle</strong>
+                  </article>
+                </div>
               </div>
 
               <div class="live-status" id="live-status">

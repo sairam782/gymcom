@@ -65,7 +65,10 @@ const videoMeta = document.querySelector("#video-meta");
 const frameGrid = document.querySelector("#frame-grid");
 const sampleReportButton = document.querySelector("#sample-report-btn");
 const outputPanel = document.querySelector(".output-panel");
-const BACKEND_URL = "http://127.0.0.1:8000/api/analyze";
+const BACKEND_URL =
+  window.location.protocol === "file:"
+    ? "http://127.0.0.1:8000/api/analyze"
+    : new URL("/api/analyze", window.location.origin).toString();
 
 const reportSummary = document.querySelector("#report-summary");
 const movementPhases = document.querySelector("#movement-phases");

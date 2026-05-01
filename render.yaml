@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: gymbuddy-vision
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-4-5
+      - key: GYMBUDDY_SECONDS_PER_FRAME
+        value: "2"
+      - key: GYMBUDDY_MAX_MODEL_FRAMES
+        value: "12"
+      - key: GYMBUDDY_MAX_PREVIEW_FRAMES
+        value: "3"

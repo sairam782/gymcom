@@ -691,6 +691,39 @@ td {
   color: var(--text);
 }
 
+.exercise-spec-card {
+  display: grid;
+  gap: 14px;
+  background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(244, 236, 226, 0.96));
+}
+
+.exercise-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.exercise-spec-grid article {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(36, 50, 77, 0.1);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.exercise-spec-grid span {
+  display: block;
+  color: var(--clinical-soft);
+  font-size: 0.82rem;
+}
+
+.exercise-spec-grid strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--clinical);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
 .live-status {
   padding: 14px 16px;
   border-radius: 18px;
@@ -949,7 +982,17 @@ summary {
     grid-template-columns: 1fr 1fr;
   }
 
+  .exercise-spec-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .live-overlay-badge {
     max-width: calc(100% - 32px);
+  }
+}
+
+@media (max-width: 560px) {
+  .exercise-spec-grid {
+    grid-template-columns: 1fr;
   }
 }
