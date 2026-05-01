@@ -6,9 +6,13 @@ from pathlib import Path
 
 import cv2
 from anthropic import Anthropic
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 PROMPT = """
@@ -170,6 +174,10 @@ def encode_image(path: Path) -> str:
     return base64.b64encode(path.read_bytes()).decode()
 
 
+def encode_bytes(data: bytes) -> str:
+    return base64.b64encode(data).decode()
+
+
 def build_claude_content(encoded_images: list[str]) -> list[dict]:
     content: list[dict] = [{"type": "text", "text": PROMPT}]
     for image in encoded_images:
@@ -184,6 +192,38 @@ def build_claude_content(encoded_images: list[str]) -> list[dict]:
             }
         )
     return content
+
+
+def extract_error_message(error: Exception) -> str:
+    message = str(error).strip()
+    return message or error.__class__.__name__
+
+
+def create_claude_report(encoded_model_frames: list[str]) -> str:
+    client = require_client()
+    try:
+        response = client.messages.create(
+            model=MODEL_NAME,
+            max_tokens=2500,
+            messages=[
+                {
+                    "role": "user",
+                    "content": build_claude_content(encoded_model_frames),
+                }
+            ],
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Anthropic request failed: {extract_error_message(error)}",
+        ) from error
+
+    report_text = ""
+    for block in response.content:
+        if getattr(block, "type", None) == "text":
+            report_text += block.text
+
+    return report_text.strip()
 
 
 @app.get("/api/health")
@@ -228,9 +268,52 @@ def serve_app_file(path: str) -> FileResponse:
 
 
 @app.post("/api/analyze")
-async def analyze_video(file: UploadFile = File(...)) -> JSONResponse:
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No file uploaded.")
+async def analyze_video(
+    file: UploadFile | None = File(None),
+    frames: list[UploadFile] | None = File(None),
+    filename: str | None = Form(None),
+    extracted_frame_count: int | None = Form(None),
+    duration_seconds: float | None = Form(None),
+) -> JSONResponse:
+    if frames:
+        frame_payloads: list[tuple[str, bytes]] = []
+        for index, frame in enumerate(frames):
+            payload = await frame.read()
+            if not payload:
+                continue
+            frame_name = frame.filename or f"frame_{index}.jpg"
+            frame_payloads.append((frame_name, payload))
+
+        if not frame_payloads:
+            raise HTTPException(status_code=400, detail="No usable frames were uploaded.")
+
+        selected_frame_payloads = frame_payloads[:MAX_MODEL_FRAMES]
+        preview_frame_payloads = frame_payloads[:MAX_PREVIEW_FRAMES]
+        report_text = create_claude_report(
+            [encode_bytes(payload) for _, payload in selected_frame_payloads]
+        )
+
+        return JSONResponse(
+            {
+                "ok": True,
+                "filename": filename or "browser-sampled-video",
+                "frames_extracted": extracted_frame_count or len(frame_payloads),
+                "frames_sent": len(selected_frame_payloads),
+                "duration_seconds": duration_seconds,
+                "seconds_per_frame": SECONDS_PER_FRAME,
+                "report_text": report_text,
+                "preview_frames": [
+                    f"data:image/jpeg;base64,{encode_bytes(payload)}"
+                    for _, payload in preview_frame_payloads
+                ],
+            }
+        )
+
+    if not file or not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="No video or extracted frames were uploaded.",
+        )
 
     suffix = Path(file.filename).suffix or ".mp4"
     workspace = Path(tempfile.mkdtemp(prefix="gymbuddy_"))
@@ -252,22 +335,7 @@ async def analyze_video(file: UploadFile = File(...)) -> JSONResponse:
         preview_frames = select_frames(extracted_frames, MAX_PREVIEW_FRAMES)
         encoded_model_frames = [encode_image(path) for path in selected_frames]
 
-        client = require_client()
-        response = client.messages.create(
-            model=MODEL_NAME,
-            max_tokens=2500,
-            messages=[
-                {
-                    "role": "user",
-                    "content": build_claude_content(encoded_model_frames),
-                }
-            ],
-        )
-
-        report_text = ""
-        for block in response.content:
-            if getattr(block, "type", None) == "text":
-                report_text += block.text
+        report_text = create_claude_report(encoded_model_frames)
 
         return JSONResponse(
             {
@@ -276,7 +344,7 @@ async def analyze_video(file: UploadFile = File(...)) -> JSONResponse:
                 "frames_extracted": len(extracted_frames),
                 "frames_sent": len(selected_frames),
                 "seconds_per_frame": SECONDS_PER_FRAME,
-                "report_text": report_text.strip(),
+                "report_text": report_text,
                 "preview_frames": [f"data:image/jpeg;base64,{encode_image(path)}" for path in preview_frames],
             }
         )

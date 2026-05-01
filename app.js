@@ -282,6 +282,11 @@ const scenarios = [
 
 let activeObjectUrl = null;
 let currentVideoName = "";
+let currentVideoFile = null;
+const FRAME_SAMPLE_COUNT = 6;
+const FRAME_JPEG_QUALITY = 0.62;
+const FRAME_MAX_WIDTH = 560;
+const FRAME_TARGET_BYTES = 3.8 * 1024 * 1024;
 
 function formatSeconds(value) {
   if (!Number.isFinite(value)) {
@@ -292,6 +297,102 @@ function formatSeconds(value) {
     .toString()
     .padStart(2, "0");
   return `${minutes}:${seconds}`;
+}
+
+function waitForEvent(target, eventName) {
+  return new Promise((resolve, reject) => {
+    const onSuccess = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = () => {
+      cleanup();
+      reject(new Error(`Could not prepare the video for ${eventName}.`));
+    };
+    const cleanup = () => {
+      target.removeEventListener(eventName, onSuccess);
+      target.removeEventListener("error", onError);
+    };
+    target.addEventListener(eventName, onSuccess, { once: true });
+    target.addEventListener("error", onError, { once: true });
+  });
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Could not turn the selected frame into an image."));
+        return;
+      }
+      resolve(blob);
+    }, type, quality);
+  });
+}
+
+async function seekVideo(video, time) {
+  if (Math.abs(video.currentTime - time) < 0.01) {
+    return;
+  }
+  video.currentTime = time;
+  await waitForEvent(video, "seeked");
+}
+
+async function sampleFramesFromVideo(file) {
+  const tempUrl = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  video.preload = "metadata";
+  video.muted = true;
+  video.playsInline = true;
+  video.src = tempUrl;
+
+  try {
+    await waitForEvent(video, "loadedmetadata");
+
+    const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+    const frameCount = duration > 0
+      ? Math.min(FRAME_SAMPLE_COUNT, Math.max(4, Math.ceil(duration / 3)))
+      : 4;
+
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+    const scale = Math.min(1, FRAME_MAX_WIDTH / width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    const context = canvas.getContext("2d", { alpha: false });
+
+    if (!context) {
+      throw new Error("Could not initialize frame extraction.");
+    }
+
+    const frames = [];
+    for (let index = 0; index < frameCount; index += 1) {
+      const time =
+        duration > 0
+          ? Math.min(duration - 0.05, (duration * (index + 0.5)) / frameCount)
+          : 0;
+      await seekVideo(video, Math.max(0, time));
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const blob = await canvasToBlob(canvas, "image/jpeg", FRAME_JPEG_QUALITY);
+      frames.push({
+        blob,
+        filename: `frame_${index + 1}.jpg`
+      });
+    }
+
+    const totalBytes = frames.reduce((sum, frame) => sum + frame.blob.size, 0);
+    if (totalBytes > FRAME_TARGET_BYTES) {
+      throw new Error("Video is still too large after frame sampling. Trim the clip shorter and try again.");
+    }
+
+    return {
+      duration,
+      frames
+    };
+  } finally {
+    URL.revokeObjectURL(tempUrl);
+  }
 }
 
 function setStatus(text, isBusy = false) {
@@ -562,6 +663,7 @@ function pickScenario() {
 }
 
 function setVideo(file) {
+  currentVideoFile = file;
   if (activeObjectUrl) {
     URL.revokeObjectURL(activeObjectUrl);
   }
@@ -612,22 +714,38 @@ document
   .addEventListener("drop", handleVideoDrop);
 
 analyzeButton.addEventListener("click", () => {
-  const file = input.files?.[0];
+  const file = currentVideoFile || input.files?.[0];
   if (!file) {
     setStatus("Choose a video before generating analysis.", false);
     return;
   }
 
-  const formData = new FormData();
-  formData.append("file", file);
-  setStatus("Uploading video, extracting frames, and generating the coach report...", true);
+  setStatus("Sampling key frames in your browser and generating the coach report...", true);
 
-  fetch(BACKEND_URL, {
-    method: "POST",
-    body: formData
-  })
+  sampleFramesFromVideo(file)
+    .then(({ frames, duration }) => {
+      const formData = new FormData();
+      formData.append("filename", file.name);
+      formData.append("duration_seconds", `${duration || 0}`);
+      formData.append("extracted_frame_count", `${frames.length}`);
+      frames.forEach((frame) => {
+        formData.append("frames", frame.blob, frame.filename);
+      });
+
+      return fetch(BACKEND_URL, {
+        method: "POST",
+        body: formData
+      });
+    })
     .then(async (response) => {
-      const data = await response.json();
+      const rawBody = await response.text();
+      let data = {};
+      try {
+        data = rawBody ? JSON.parse(rawBody) : {};
+      } catch {
+        data = { detail: rawBody || "Analysis failed." };
+      }
+
       if (!response.ok || !data.ok) {
         throw new Error(data.detail || "Analysis failed.");
       }
@@ -635,15 +753,12 @@ analyzeButton.addEventListener("click", () => {
       const parsed = parseReportText(data.report_text, data.preview_frames || []);
       renderReport(
         parsed,
-        `Analysis ready for ${data.filename} | Frames extracted: ${data.frames_extracted} | Frames sent: ${data.frames_sent}`
+        `Analysis ready for ${data.filename} | Browser frames: ${data.frames_extracted} | Frames sent: ${data.frames_sent}`
       );
     })
     .catch((error) => {
       console.error(error);
-      setStatus(
-        "Backend unavailable or analysis failed. Start the Python server and make sure ANTHROPIC_API_KEY is set.",
-        false
-      );
+      setStatus(error.message || "Analysis failed.", false);
     });
 });
 
