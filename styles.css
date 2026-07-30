@@ -1542,6 +1542,366 @@ td {
   border-bottom: 2px solid transparent;
 }
 
+/* Bright GymCom Live palette and subtle motion background. */
+.live-dashboard {
+  --live-base: #f0f4f8;
+  --live-surface: #ffffff;
+  --live-text: #111827;
+  --live-muted: #6b7280;
+  --live-body: #374151;
+  --live-accent: #00c896;
+  --live-accent-deep: #00a87e;
+  --live-secondary: #3b82f6;
+  --live-warning: #d97706;
+  --live-warning-bg: #fff8e7;
+  --live-success: #34d399;
+  --live-line: #e5e7eb;
+  --angle-progress: 0%;
+  --cursor-x: 50vw;
+  --cursor-y: 50vh;
+  color: var(--live-text);
+  background: var(--live-base);
+  overflow-x: hidden;
+}
+
+.live-dashboard .site-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.live-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pose-mesh,
+.kinematic-grid,
+.cursor-orb,
+.stable-particles {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
+}
+
+.pose-mesh {
+  top: 6%;
+  left: 9%;
+  width: 44vw;
+  height: 44vw;
+  max-width: 560px;
+  max-height: 560px;
+  opacity: 0.08;
+  background:
+    linear-gradient(32deg, transparent 0 47%, rgba(0, 200, 150, 0.35) 48% 49%, transparent 50%),
+    linear-gradient(142deg, transparent 0 48%, rgba(59, 130, 246, 0.3) 49% 50%, transparent 51%),
+    repeating-linear-gradient(0deg, transparent 0 34px, rgba(0, 200, 150, 0.26) 35px 36px),
+    repeating-linear-gradient(90deg, transparent 0 42px, rgba(59, 130, 246, 0.18) 43px 44px);
+  clip-path: polygon(10% 20%, 48% 4%, 88% 24%, 96% 68%, 62% 94%, 18% 82%, 2% 48%);
+  transform: rotateX(55deg) rotateZ(-14deg);
+  animation: poseMeshDrift 28s linear infinite;
+}
+
+.kinematic-grid {
+  opacity: 0.42;
+  background-image:
+    radial-gradient(circle, rgba(0, 168, 126, 0.13) 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(59, 130, 246, 0.08) 1px, transparent 1.5px);
+  background-position: 0 0, 22px 22px;
+  background-size: 44px 44px;
+  animation: kinematicGridDrift 80s linear infinite;
+}
+
+.cursor-orb {
+  opacity: 0;
+  background: radial-gradient(circle at var(--cursor-x) var(--cursor-y), rgba(0, 200, 150, 0.08), rgba(0, 200, 150, 0.03) 130px, transparent 250px);
+  filter: blur(22px);
+  transition: opacity 450ms ease;
+}
+
+.live-dashboard.has-cursor-glow .cursor-orb {
+  opacity: 1;
+}
+
+.stable-particles {
+  inset: auto 0 0;
+  height: 42%;
+}
+
+.stable-particles span {
+  position: absolute;
+  bottom: 20px;
+  width: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--live-accent);
+  opacity: 0;
+  animation: stableParticleFloat 10s ease-out forwards;
+}
+
+.stable-particles span.is-fading {
+  animation: stableParticleFade 800ms ease forwards;
+}
+
+.live-dashboard .topbar {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+}
+
+.live-dashboard .brand-mark,
+.live-dashboard .panel-heading h2,
+.live-dashboard .past-report-card strong,
+.live-dashboard .preview-empty p,
+.live-dashboard .site-footer-copy strong {
+  color: var(--live-text);
+}
+
+.live-dashboard .topnav a,
+.live-dashboard .site-footer-link,
+.live-dashboard .session-pill,
+.live-dashboard .panel-heading p,
+.live-dashboard .coach-feedback,
+.live-dashboard .report-list,
+.live-dashboard .field-help,
+.live-dashboard .privacy-note,
+.live-dashboard .preview-empty {
+  color: var(--live-muted);
+}
+
+.live-dashboard .topnav a:hover,
+.live-dashboard .site-footer-link:hover {
+  color: var(--live-text);
+}
+
+.live-dashboard .panel,
+.live-dashboard .report-card,
+.live-dashboard .past-reports-section,
+.live-dashboard .site-footer,
+.live-dashboard .control-card,
+.live-dashboard .data-panel {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--live-line);
+}
+
+.live-dashboard .live-panel {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.live-dashboard .section-tag,
+.live-dashboard .report-label,
+.live-dashboard .eyebrow,
+.live-dashboard .past-report-card span {
+  color: var(--live-muted);
+}
+
+.live-dashboard .session-pill {
+  background: #e8faf5;
+  border-color: rgba(0, 200, 150, 0.12);
+  color: var(--live-accent-deep);
+}
+
+.live-dashboard .live-warning-banner {
+  background: var(--live-warning-bg);
+  border-bottom-color: rgba(217, 119, 6, 0.22);
+  color: var(--live-warning);
+}
+
+.live-dashboard .live-controls,
+.live-dashboard .live-camera-shell,
+.live-dashboard .live-data-rail,
+.live-dashboard .panel-heading,
+.live-dashboard .live-status,
+.live-dashboard .live-cue-banner,
+.live-dashboard .live-error,
+.live-dashboard .exercise-spec-grid,
+.live-dashboard .live-digest-grid,
+.live-dashboard .live-metrics-grid,
+.live-dashboard .past-reports-grid,
+.live-dashboard .exercise-spec-grid article,
+.live-dashboard .live-digest-grid article,
+.live-dashboard .metric-card,
+.live-dashboard .past-report-card,
+.live-dashboard .active-report,
+.live-dashboard .wide-card {
+  border-color: var(--live-line);
+}
+
+.live-dashboard .live-controls select,
+.live-dashboard .live-controls input {
+  background: #ffffff;
+  border-color: var(--live-line);
+  color: var(--live-muted);
+}
+
+.live-dashboard .live-controls select:valid {
+  border-left-color: var(--live-accent);
+  color: var(--live-text);
+}
+
+.segmented-control {
+  border-color: var(--live-line);
+  background: #ffffff;
+}
+
+.segment-button {
+  border-color: var(--live-line);
+  color: var(--live-muted);
+}
+
+.segment-button.is-active {
+  color: var(--live-accent-deep);
+  background: rgba(0, 200, 150, 0.1);
+  border-bottom-color: var(--live-accent);
+}
+
+.live-dashboard .start-camera-button,
+.live-dashboard .claude-report-button:not(:disabled) {
+  background: var(--live-accent);
+  color: #ffffff;
+}
+
+.live-dashboard .stop-camera-button {
+  border-color: var(--live-line);
+  background: #ffffff;
+  color: var(--live-body);
+}
+
+.live-dashboard .live-status,
+.live-dashboard .live-cue-banner {
+  background: #ffffff;
+  color: var(--live-body);
+}
+
+.live-dashboard .live-cue-banner span,
+.live-dashboard .exercise-spec-grid span,
+.live-dashboard .live-digest-grid span,
+.live-dashboard .metric-card span {
+  color: var(--live-muted);
+}
+
+.live-dashboard .live-cue-banner strong,
+.live-dashboard .exercise-spec-grid strong,
+.live-dashboard .live-digest-grid strong,
+.live-dashboard .metric-card strong {
+  color: var(--live-text);
+}
+
+.live-dashboard .metric-card:not(.is-waiting) strong,
+.live-dashboard .live-digest-grid article:not(.is-waiting) strong {
+  color: var(--live-accent-deep);
+}
+
+.live-dashboard .phase-card strong {
+  background: #e8faf5;
+  border-color: rgba(0, 200, 150, 0.18);
+  color: var(--live-accent-deep);
+}
+
+.live-dashboard .metric-card.is-waiting strong,
+.live-dashboard .live-digest-grid article.is-waiting strong {
+  color: var(--live-muted);
+}
+
+.live-dashboard .confidence-track {
+  background: #e5e7eb;
+}
+
+.live-dashboard .confidence-track span {
+  background: linear-gradient(90deg, var(--live-accent), var(--live-secondary));
+}
+
+.live-dashboard .live-preview {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, 0.96), rgba(31, 41, 55, 0.96)),
+    radial-gradient(circle at center, rgba(0, 200, 150, 0.16), transparent 42%);
+}
+
+.live-dashboard .live-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.live-dashboard .live-preview.is-tracking {
+  box-shadow: inset 0 0 0 1px var(--live-accent);
+}
+
+.live-dashboard .live-overlay-badge {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--live-line);
+  color: var(--live-muted);
+}
+
+.live-dashboard .live-overlay-badge[data-kind="good"] {
+  background: #e8faf5;
+  color: var(--live-accent-deep);
+  border-color: rgba(0, 200, 150, 0.22);
+}
+
+.live-dashboard .live-overlay-badge[data-kind="warn"],
+.live-dashboard .live-error {
+  background: var(--live-warning-bg);
+  color: var(--live-warning);
+  border-color: rgba(217, 119, 6, 0.22);
+}
+
+.live-dashboard .live-data-rail {
+  position: relative;
+}
+
+.live-angle-arc {
+  position: absolute;
+  top: 72px;
+  right: 24px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.18;
+  background:
+    conic-gradient(var(--live-accent) 0 var(--angle-progress), rgba(59, 130, 246, 0.12) var(--angle-progress) 100%),
+    radial-gradient(circle, transparent 61%, rgba(255, 255, 255, 0.82) 62%);
+  mask: radial-gradient(circle, transparent 57%, #000 58% 60%, transparent 61%);
+}
+
+.live-dashboard.is-live-tracking .pose-mesh {
+  animation-duration: 14s;
+}
+
+.live-dashboard.is-live-tracking .kinematic-grid {
+  opacity: 0.58;
+}
+
+.live-dashboard.is-live-tracking .live-angle-arc {
+  opacity: 0.32;
+}
+
+.live-dashboard .past-report-card,
+.live-dashboard .active-report,
+.live-dashboard .wide-card {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.live-dashboard .past-report-card p {
+  color: var(--live-body);
+}
+
+.live-dashboard .site-footer {
+  background: transparent;
+}
+
+.live-dashboard .site-footer-copy {
+  color: var(--live-muted);
+}
+
 .live-sidebar-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1668,6 +2028,60 @@ summary {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes poseMeshDrift {
+  0% {
+    transform: rotateX(55deg) rotateZ(-14deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotateX(58deg) rotateZ(4deg) translate3d(12px, -8px, 0);
+  }
+  100% {
+    transform: rotateX(55deg) rotateZ(346deg) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes kinematicGridDrift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(18px, -18px, 0);
+  }
+}
+
+@keyframes stableParticleFloat {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.8);
+  }
+  18% {
+    opacity: 0.16;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0) scale(1);
+  }
+}
+
+@keyframes stableParticleFade {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pose-mesh,
+  .kinematic-grid,
+  .stable-particles span,
+  .live-status.is-loading::before {
+    animation: none;
+  }
+
+  .cursor-orb {
+    display: none;
   }
 }
 

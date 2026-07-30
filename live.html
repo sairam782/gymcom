@@ -13,6 +13,13 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body class="live-dashboard">
+    <div class="live-background" aria-hidden="true">
+      <div class="pose-mesh"></div>
+      <div class="kinematic-grid"></div>
+      <div class="cursor-orb"></div>
+      <div class="stable-particles" id="stable-particles"></div>
+    </div>
+
     <div class="site-shell">
       <header class="topbar">
         <div class="brand-mark">GymCom Live</div>
@@ -290,6 +297,7 @@
             </section>
 
             <aside class="live-data-rail" aria-label="Live metrics and session digest">
+              <div class="live-angle-arc" aria-hidden="true"></div>
               <section class="data-panel">
                 <h3 class="report-label">Live Metrics</h3>
                 <div class="live-metrics-grid" aria-label="Live tracking metrics">

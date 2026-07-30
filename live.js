@@ -15,6 +15,7 @@ const liveScore = document.querySelector("#live-score");
 const liveConfidence = document.querySelector("#live-confidence");
 const confidenceBar = document.querySelector("#confidence-bar");
 const formScoreBar = document.querySelector("#form-score-bar");
+const stableParticles = document.querySelector("#stable-particles");
 const liveCue = document.querySelector("#live-cue");
 const leftAngleLabel = document.querySelector("#left-angle-label");
 const rightAngleLabel = document.querySelector("#right-angle-label");
@@ -46,6 +47,8 @@ let smoothedAngle = null;
 let stableFrames = 0;
 let totalFrames = 0;
 let sessionHasData = false;
+let renderedStableParticleCount = 0;
+let cursorFadeTimeout = null;
 
 const WAITING_TEXT = "—";
 const DEFAULT_STATUS = "Select an exercise and align your body in frame, then press Start.";
@@ -484,6 +487,54 @@ function setFormScore(value) {
   setWaiting(liveScore, true);
 }
 
+function setBackgroundTracking(active) {
+  document.body.classList.toggle("is-live-tracking", active);
+}
+
+function setAngleArcProgress(value) {
+  const progress = Number.isFinite(value) ? clamp(value, 0, 1) : 0;
+  document.body.style.setProperty("--angle-progress", `${Math.round(progress * 100)}%`);
+}
+
+function renderStableParticles(count) {
+  if (!stableParticles) {
+    return;
+  }
+  const targetCount = Math.min(18, Math.floor(count / 10));
+  while (renderedStableParticleCount < targetCount) {
+    const particle = document.createElement("span");
+    const x = 16 + Math.random() * 68;
+    const delay = Math.random() * 4;
+    particle.style.left = `${x}%`;
+    particle.style.animationDelay = `${delay}s`;
+    stableParticles.appendChild(particle);
+    renderedStableParticleCount += 1;
+  }
+}
+
+function clearStableParticles() {
+  if (!stableParticles) {
+    return;
+  }
+  stableParticles.querySelectorAll("span").forEach((particle) => {
+    particle.classList.add("is-fading");
+  });
+  window.setTimeout(() => {
+    stableParticles.textContent = "";
+    renderedStableParticleCount = 0;
+  }, 900);
+}
+
+function trackCursorGlow(event) {
+  document.body.style.setProperty("--cursor-x", `${event.clientX}px`);
+  document.body.style.setProperty("--cursor-y", `${event.clientY}px`);
+  document.body.classList.add("has-cursor-glow");
+  window.clearTimeout(cursorFadeTimeout);
+  cursorFadeTimeout = window.setTimeout(() => {
+    document.body.classList.remove("has-cursor-glow");
+  }, 2000);
+}
+
 function setClaudeReportEnabled(enabled) {
   generateClaudeReport.disabled = !enabled;
   generateClaudeReport.setAttribute("aria-disabled", String(!enabled));
@@ -502,6 +553,8 @@ function resetSessionState() {
   stableFrames = 0;
   totalFrames = 0;
   sessionHasData = false;
+  setAngleArcProgress(null);
+  clearStableParticles();
   setClaudeReportEnabled(false);
 }
 
@@ -919,6 +972,8 @@ function updateDigest(angles, depthRatio, positionQuality) {
   setReadout(liveDepth, depthRatio == null ? WAITING_TEXT : formatPercent(depthRatio), depthRatio == null);
   setReadout(liveSymmetry, symmetryGap == null ? WAITING_TEXT : `${Math.round(symmetryGap)}° gap`, symmetryGap == null);
   setReadout(liveStable, totalFrames ? formatPercent(stableFrames / totalFrames) : WAITING_TEXT, !totalFrames);
+  setAngleArcProgress(depthRatio);
+  renderStableParticles(stableFrames);
   if (stableFrames > 0) {
     sessionHasData = true;
     setClaudeReportEnabled(true);
@@ -1132,6 +1187,7 @@ async function startLiveMode() {
     await liveVideo.play();
     livePreviewEmpty.style.display = "none";
     liveVideo.closest(".live-preview")?.classList.add("is-tracking");
+    setBackgroundTracking(true);
     resetSessionState();
     resetLiveReadout();
     updateAngleLabels();
@@ -1164,6 +1220,7 @@ function stopLiveMode(preserveSession = false) {
   ctx.clearRect(0, 0, liveOverlay.width, liveOverlay.height);
   liveVideo.srcObject = null;
   liveVideo.closest(".live-preview")?.classList.remove("is-tracking");
+  setBackgroundTracking(false);
   livePreviewEmpty.style.display = "grid";
   if (preserveSession && sessionHasData) {
     liveCue.textContent = "Session ended. Review the digest or generate a Claude report.";
@@ -1223,6 +1280,7 @@ liveModel.addEventListener("change", () => {
 segmentButtons.forEach((button) => {
   button.addEventListener("click", () => setSegmentValue(button));
 });
+window.addEventListener("pointermove", trackCursorGlow, { passive: true });
 generateClaudeReport.addEventListener("click", () => {
   if (!sessionHasData) {
     return;
@@ -1236,3 +1294,4 @@ setLiveStatus(DEFAULT_STATUS);
 setCameraButtons(false);
 syncSegmentButtons("live-angle", liveAngle.value);
 syncSegmentButtons("live-model", liveModel.value);
+setAngleArcProgress(null);
