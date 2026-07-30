@@ -2,10 +2,9 @@ const liveVideo = document.querySelector("#live-video");
 const liveOverlay = document.querySelector("#live-overlay");
 const livePreviewEmpty = document.querySelector("#live-preview-empty");
 const liveExercise = document.querySelector("#live-exercise");
-const exerciseSearch = document.querySelector("#exercise-search");
-const exerciseChips = document.querySelectorAll(".exercise-chip");
 const liveAngle = document.querySelector("#live-angle");
 const liveModel = document.querySelector("#live-model");
+const segmentButtons = document.querySelectorAll(".segment-button");
 const startLiveButton = document.querySelector("#start-live");
 const stopLiveButton = document.querySelector("#stop-live");
 const liveStatus = document.querySelector("#live-status");
@@ -15,6 +14,7 @@ const livePhase = document.querySelector("#live-phase");
 const liveScore = document.querySelector("#live-score");
 const liveConfidence = document.querySelector("#live-confidence");
 const confidenceBar = document.querySelector("#confidence-bar");
+const formScoreBar = document.querySelector("#form-score-bar");
 const liveCue = document.querySelector("#live-cue");
 const leftAngleLabel = document.querySelector("#left-angle-label");
 const rightAngleLabel = document.querySelector("#right-angle-label");
@@ -45,10 +45,9 @@ let lastPhase = "Ready";
 let smoothedAngle = null;
 let stableFrames = 0;
 let totalFrames = 0;
-let activeExerciseFilter = "all";
 let sessionHasData = false;
 
-const WAITING_TEXT = "Waiting...";
+const WAITING_TEXT = "—";
 const DEFAULT_STATUS = "Select an exercise and align your body in frame, then press Start.";
 const ACTIVE_CHAIN_COLOR = "#40d3a8";
 const BODY_CHAIN_COLOR = "rgba(255, 247, 239, 0.56)";
@@ -470,6 +469,19 @@ function setConfidence(value) {
   liveConfidence.textContent = WAITING_TEXT;
   confidenceBar.style.width = "0%";
   setWaiting(liveConfidence, true);
+}
+
+function setFormScore(value) {
+  const numeric = Number.parseFloat(value);
+  if (Number.isFinite(numeric)) {
+    liveScore.textContent = `${Math.round(numeric * 10)} / 100`;
+    formScoreBar.style.width = `${clamp(numeric / 10, 0, 1) * 100}%`;
+    setWaiting(liveScore, false);
+    return;
+  }
+  liveScore.textContent = WAITING_TEXT;
+  formScoreBar.style.width = "0%";
+  setWaiting(liveScore, true);
 }
 
 function setClaudeReportEnabled(enabled) {
@@ -907,7 +919,7 @@ function updateDigest(angles, depthRatio, positionQuality) {
   setReadout(liveDepth, depthRatio == null ? WAITING_TEXT : formatPercent(depthRatio), depthRatio == null);
   setReadout(liveSymmetry, symmetryGap == null ? WAITING_TEXT : `${Math.round(symmetryGap)}° gap`, symmetryGap == null);
   setReadout(liveStable, totalFrames ? formatPercent(stableFrames / totalFrames) : WAITING_TEXT, !totalFrames);
-  if (totalFrames > 12) {
+  if (stableFrames > 0) {
     sessionHasData = true;
     setClaudeReportEnabled(true);
   }
@@ -984,7 +996,7 @@ function resetLiveReadout() {
   const currentProfile = profile();
   setReadout(liveReps, "0");
   setReadout(livePhase, currentProfile ? "Ready" : "Select exercise");
-  setReadout(liveScore, WAITING_TEXT, true);
+  setFormScore(null);
   setConfidence(null);
   liveCue.textContent = currentProfile ? `${currentProfile.cue}` : "Select an exercise.";
   setReadout(leftAngleEl, WAITING_TEXT, true);
@@ -1079,7 +1091,7 @@ async function estimatePoseLoop() {
 
   setReadout(liveReps, String(repCounter));
   setReadout(livePhase, phase);
-  setReadout(liveScore, form.score, form.score === WAITING_TEXT);
+  setFormScore(form.score);
   setConfidence(angles.confidence);
   liveCue.textContent = form.cue;
   setReadout(leftAngleEl, Number.isFinite(angles.left) ? `${angles.left}°` : WAITING_TEXT, !Number.isFinite(angles.left));
@@ -1119,6 +1131,7 @@ async function startLiveMode() {
     liveVideo.srcObject = liveStream;
     await liveVideo.play();
     livePreviewEmpty.style.display = "none";
+    liveVideo.closest(".live-preview")?.classList.add("is-tracking");
     resetSessionState();
     resetLiveReadout();
     updateAngleLabels();
@@ -1150,6 +1163,7 @@ function stopLiveMode(preserveSession = false) {
   }
   ctx.clearRect(0, 0, liveOverlay.width, liveOverlay.height);
   liveVideo.srcObject = null;
+  liveVideo.closest(".live-preview")?.classList.remove("is-tracking");
   livePreviewEmpty.style.display = "grid";
   if (preserveSession && sessionHasData) {
     liveCue.textContent = "Session ended. Review the digest or generate a Claude report.";
@@ -1176,76 +1190,38 @@ async function refreshDetectorIfRunning() {
   await startLiveMode();
 }
 
-function optionMatchesFilter(option) {
-  if (!option.value) {
-    return true;
-  }
-  const currentProfile = EXERCISE_PROFILES[option.value];
-  const text = option.textContent.toLowerCase();
-  if (!currentProfile) {
-    return false;
-  }
-  if (activeExerciseFilter === "all") {
-    return true;
-  }
-  if (activeExerciseFilter === "bodyweight") {
-    return currentProfile.equipment.toLowerCase().includes("bodyweight");
-  }
-  if (activeExerciseFilter === "gym") {
-    return currentProfile.category.toLowerCase().includes("gym");
-  }
-  if (activeExerciseFilter === "core") {
-    return ["plank", "superman"].some((term) => text.includes(term));
-  }
-  if (activeExerciseFilter === "push") {
-    return ["push", "press", "dip", "raise"].some((term) => text.includes(term));
-  }
-  if (activeExerciseFilter === "pull") {
-    return ["pull", "row", "curl", "deadlift", "pulldown"].some((term) => text.includes(term));
-  }
-  return true;
-}
-
-function filterExercises() {
-  const query = exerciseSearch.value.trim().toLowerCase();
-  const options = Array.from(liveExercise.options);
-  let firstVisibleValue = "";
-
-  options.forEach((option) => {
-    const matchesQuery = !query || option.textContent.toLowerCase().includes(query);
-    const visible = optionMatchesFilter(option) && matchesQuery;
-    option.hidden = !visible;
-    option.disabled = !visible && Boolean(option.value);
-    if (visible && option.value && !firstVisibleValue) {
-      firstVisibleValue = option.value;
+function syncSegmentButtons(controlId, value) {
+  segmentButtons.forEach((button) => {
+    if (button.dataset.control !== controlId) {
+      return;
     }
+    button.classList.toggle("is-active", button.dataset.value === value);
   });
-
-  const selectedOption = liveExercise.options[liveExercise.selectedIndex];
-  if (selectedOption?.disabled) {
-    liveExercise.value = "";
-    refreshDetectorIfRunning();
-  }
-
-  setCameraButtons(Boolean(liveStream));
 }
 
-function setExerciseFilter(filter) {
-  activeExerciseFilter = filter;
-  exerciseChips.forEach((chip) => {
-    chip.classList.toggle("is-active", chip.dataset.filter === filter);
-  });
-  filterExercises();
+function setSegmentValue(button) {
+  const control = document.querySelector(`#${button.dataset.control}`);
+  if (!control) {
+    return;
+  }
+  control.value = button.dataset.value;
+  syncSegmentButtons(button.dataset.control, control.value);
+  control.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 startLiveButton.addEventListener("click", startLiveMode);
 stopLiveButton.addEventListener("click", () => stopLiveMode(true));
 liveExercise.addEventListener("change", refreshDetectorIfRunning);
-liveAngle.addEventListener("change", refreshDetectorIfRunning);
-liveModel.addEventListener("change", refreshDetectorIfRunning);
-exerciseSearch.addEventListener("input", filterExercises);
-exerciseChips.forEach((chip) => {
-  chip.addEventListener("click", () => setExerciseFilter(chip.dataset.filter));
+liveAngle.addEventListener("change", () => {
+  syncSegmentButtons("live-angle", liveAngle.value);
+  refreshDetectorIfRunning();
+});
+liveModel.addEventListener("change", () => {
+  syncSegmentButtons("live-model", liveModel.value);
+  refreshDetectorIfRunning();
+});
+segmentButtons.forEach((button) => {
+  button.addEventListener("click", () => setSegmentValue(button));
 });
 generateClaudeReport.addEventListener("click", () => {
   if (!sessionHasData) {
@@ -1258,3 +1234,5 @@ updateAngleLabels();
 resetLiveReadout();
 setLiveStatus(DEFAULT_STATUS);
 setCameraButtons(false);
+syncSegmentButtons("live-angle", liveAngle.value);
+syncSegmentButtons("live-model", liveModel.value);

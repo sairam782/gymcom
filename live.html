@@ -7,12 +7,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@400;500;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body class="live-dashboard">
     <div class="site-shell">
       <header class="topbar">
         <div class="brand-mark">GymCom Live</div>
@@ -99,17 +99,6 @@
                   Select an exercise and align your body in frame, then press Start.
                 </p>
 
-                <label for="exercise-search">
-                  Search exercises
-                  <input
-                    id="exercise-search"
-                    type="search"
-                    placeholder="Search exercises..."
-                    autocomplete="off"
-                    aria-label="Search exercises"
-                  />
-                </label>
-
                 <label for="live-exercise">
                   Exercise
                   <select id="live-exercise" aria-label="Select exercise">
@@ -148,33 +137,34 @@
                 </select>
                 </label>
 
-                <div class="exercise-chip-grid" aria-label="Exercise categories">
-                  <button class="exercise-chip is-active" type="button" data-filter="all">All</button>
-                  <button class="exercise-chip" type="button" data-filter="bodyweight">Bodyweight</button>
-                  <button class="exercise-chip" type="button" data-filter="gym">Gym</button>
-                  <button class="exercise-chip" type="button" data-filter="push">Push</button>
-                  <button class="exercise-chip" type="button" data-filter="pull">Pull</button>
-                  <button class="exercise-chip" type="button" data-filter="core">Core</button>
-                </div>
-
                 <label for="live-angle">
                   Camera angle
-                  <select id="live-angle" aria-label="Select camera angle">
-                  <option value="side">Side</option>
-                  <option value="front">Front</option>
-                  <option value="three-quarter">45°</option>
-                </select>
+                  <select id="live-angle" class="control-select-hidden" aria-label="Select camera angle">
+                    <option value="side">Side</option>
+                    <option value="front">Front</option>
+                    <option value="three-quarter">45°</option>
+                  </select>
+                  <div class="segmented-control" aria-label="Select camera angle">
+                    <button class="segment-button is-active" type="button" data-control="live-angle" data-value="side">Side</button>
+                    <button class="segment-button" type="button" data-control="live-angle" data-value="front">Front</button>
+                    <button class="segment-button" type="button" data-control="live-angle" data-value="three-quarter">45°</button>
+                  </div>
                 </label>
 
                 <label for="live-model">
                   Model profile
-                  <select id="live-model" aria-label="Select model profile">
-                  <option value="heavy">Best accuracy (Heavy)</option>
-                  <option value="full">Balanced (Full)</option>
-                  <option value="lite">Fastest (Lite)</option>
-                </select>
+                  <select id="live-model" class="control-select-hidden" aria-label="Select model profile">
+                    <option value="heavy">Best accuracy (Heavy)</option>
+                    <option value="full">Balanced (Full)</option>
+                    <option value="lite">Fastest (Lite)</option>
+                  </select>
+                  <div class="segmented-control model-segments" aria-label="Select model profile">
+                    <button class="segment-button is-active" type="button" data-control="live-model" data-value="heavy">Heavy</button>
+                    <button class="segment-button" type="button" data-control="live-model" data-value="full">Balanced</button>
+                    <button class="segment-button" type="button" data-control="live-model" data-value="lite">Lite</button>
+                  </div>
                   <span class="field-help" id="model-help">
-                    Heavy = max accuracy, slower. Lite = fastest, lighter tracking.
+                    Heavy = max accuracy · Lite = fastest tracking
                   </span>
                 </label>
 
@@ -224,87 +214,14 @@
                 </div>
               </div>
 
-              <div class="live-status" id="live-status">
-                Select an exercise and align your body in frame, then press Start.
-              </div>
-
-              <div class="live-metrics-grid" aria-label="Live tracking metrics">
-                <article class="metric-card metric-card-active">
-                  <span>Reps</span>
-                  <strong id="live-reps">0</strong>
-                </article>
-                <article class="metric-card metric-card-active">
-                  <span>Current phase</span>
-                  <strong id="live-phase">Ready</strong>
-                </article>
-                <article class="metric-card is-waiting">
-                  <span>Form score</span>
-                  <strong id="live-score">Waiting...</strong>
-                </article>
-                <article class="metric-card is-waiting confidence-card">
-                  <span>Tracking confidence</span>
-                  <strong id="live-confidence">Waiting...</strong>
-                  <div class="confidence-track" aria-hidden="true">
-                    <span id="confidence-bar"></span>
-                  </div>
-                </article>
-                <article class="metric-card is-waiting">
-                  <span id="left-angle-label">Left angle</span>
-                  <strong id="left-knee-angle">Waiting...</strong>
-                </article>
-                <article class="metric-card is-waiting">
-                  <span id="right-angle-label">Right angle</span>
-                  <strong id="right-knee-angle">Waiting...</strong>
-                </article>
-              </div>
-
-              <div class="report-card live-session-digest">
-                <div class="report-label">Live session digest</div>
-                <p class="coach-feedback">
-                  After your set, this area summarizes depth, symmetry, stable
-                  frames, and model profile.
-                </p>
-                <div class="live-digest-grid">
-                  <article>
-                    <span>Target depth</span>
-                    <strong id="live-depth">Waiting...</strong>
-                  </article>
-                  <article>
-                    <span>Best symmetry</span>
-                    <strong id="live-symmetry">Waiting...</strong>
-                  </article>
-                  <article>
-                    <span>Stable frames</span>
-                    <strong id="live-stable">Waiting...</strong>
-                  </article>
-                  <article>
-                    <span>Model</span>
-                    <strong id="live-model-badge">Heavy</strong>
-                  </article>
-                </div>
-                <p class="coach-feedback" id="live-summary">
-                  Start the camera and stand fully inside frame to begin live
-                  kinematic tracking.
-                </p>
-                <button
-                  id="generate-claude-report"
-                  class="secondary-button claude-report-button"
-                  type="button"
-                  disabled
-                  aria-disabled="true"
-                >
-                  Generate Claude Report
-                </button>
-                <p class="privacy-note">
-                  Your live video is processed locally in the browser. Only
-                  clips, sampled frames, or metrics you choose to submit should
-                  be sent to Claude through the backend.
-                </p>
-              </div>
             </section>
 
             <section class="live-camera-shell" aria-labelledby="live-feed-title">
               <h3 class="sr-only" id="live-feed-title">Live feed and cues</h3>
+              <div class="live-status" id="live-status">
+                Select an exercise and align your body in frame, then press Start.
+              </div>
+
               <div class="live-cue-banner" role="status" aria-live="polite">
                 <span>Primary cue:</span>
                 <strong id="live-cue">Select an exercise.</strong>
@@ -371,6 +288,88 @@
                 </article>
               </div>
             </section>
+
+            <aside class="live-data-rail" aria-label="Live metrics and session digest">
+              <section class="data-panel">
+                <h3 class="report-label">Live Metrics</h3>
+                <div class="live-metrics-grid" aria-label="Live tracking metrics">
+                  <article class="metric-card metric-card-active">
+                    <span>Reps</span>
+                    <strong id="live-reps">0</strong>
+                  </article>
+                  <article class="metric-card metric-card-active phase-card">
+                    <span>Phase</span>
+                    <strong id="live-phase">Ready</strong>
+                  </article>
+                  <article class="metric-card is-waiting form-score-card">
+                    <span>Form</span>
+                    <strong id="live-score">—</strong>
+                    <div class="confidence-track" aria-hidden="true">
+                      <span id="form-score-bar"></span>
+                    </div>
+                  </article>
+                  <article class="metric-card is-waiting confidence-card">
+                    <span>Confid.</span>
+                    <strong id="live-confidence">—</strong>
+                    <div class="confidence-track" aria-hidden="true">
+                      <span id="confidence-bar"></span>
+                    </div>
+                  </article>
+                  <article class="metric-card is-waiting">
+                    <span id="left-angle-label">L angle</span>
+                    <strong id="left-knee-angle">—</strong>
+                  </article>
+                  <article class="metric-card is-waiting">
+                    <span id="right-angle-label">R angle</span>
+                    <strong id="right-knee-angle">—</strong>
+                  </article>
+                </div>
+              </section>
+
+              <section class="data-panel live-session-digest">
+                <h3 class="report-label">Session Digest</h3>
+                <p class="coach-feedback">
+                  After your set, this area summarizes depth, symmetry, stable
+                  frames, and model profile.
+                </p>
+                <div class="live-digest-grid">
+                  <article>
+                    <span>Target depth</span>
+                    <strong id="live-depth">—</strong>
+                  </article>
+                  <article>
+                    <span>Symmetry</span>
+                    <strong id="live-symmetry">—</strong>
+                  </article>
+                  <article>
+                    <span>Stable frames</span>
+                    <strong id="live-stable">—</strong>
+                  </article>
+                  <article>
+                    <span>Model</span>
+                    <strong id="live-model-badge">Heavy</strong>
+                  </article>
+                </div>
+                <p class="coach-feedback" id="live-summary">
+                  Start the camera and stand fully inside frame to begin live
+                  kinematic tracking.
+                </p>
+                <button
+                  id="generate-claude-report"
+                  class="secondary-button claude-report-button"
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                >
+                  Generate Claude Report
+                </button>
+                <p class="privacy-note">
+                  Your live video is processed locally in the browser. Only
+                  clips, sampled frames, or metrics you choose to submit should
+                  be sent to Claude through the backend.
+                </p>
+              </section>
+            </aside>
           </div>
         </section>
 
