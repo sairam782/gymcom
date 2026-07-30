@@ -1,4 +1,4 @@
-const GYMBUDDY_PROMPT = `You are GymBuddy Pro — an elite AI fitness coach, posture analyst,
+const GYMCOM_PROMPT = `You are GymCom Coach — an elite AI fitness coach, posture analyst,
 biomechanics evaluator, and exercise form specialist.
 
 You are analyzing a workout video using extracted frames from a gym session.
@@ -83,7 +83,7 @@ const issuesList = document.querySelector("#issues-list");
 const correctionsList = document.querySelector("#corrections-list");
 const coachFeedback = document.querySelector("#coach-feedback");
 
-promptDisplay.textContent = GYMBUDDY_PROMPT;
+promptDisplay.textContent = GYMCOM_PROMPT;
 
 const scenarios = [
   {
@@ -765,7 +765,7 @@ analyzeButton.addEventListener("click", () => {
 function loadSampleReport() {
   renderReport(
     scenarios[0],
-    "Demo report loaded | Premium UI preview using the GymBuddy Pro prompt structure"
+    "Demo report loaded | Premium UI preview using the GymCom Coach prompt structure"
   );
 }
 

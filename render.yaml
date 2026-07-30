@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: gymbuddy-vision
+    name: gymcom
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -13,9 +13,9 @@ services:
         sync: false
       - key: ANTHROPIC_MODEL
         value: claude-haiku-4-5
-      - key: GYMBUDDY_SECONDS_PER_FRAME
+      - key: GYMCOM_SECONDS_PER_FRAME
         value: "2"
-      - key: GYMBUDDY_MAX_MODEL_FRAMES
+      - key: GYMCOM_MAX_MODEL_FRAMES
         value: "12"
-      - key: GYMBUDDY_MAX_PREVIEW_FRAMES
+      - key: GYMCOM_MAX_PREVIEW_FRAMES
         value: "3"

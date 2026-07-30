@@ -16,7 +16,7 @@ load_dotenv()
 
 
 PROMPT = """
-You are GymBuddy Pro — an elite AI fitness coach, posture analyst,
+You are GymCom Coach — an elite AI fitness coach, posture analyst,
 biomechanics evaluator, and exercise form specialist.
 
 You are analyzing a workout video using extracted frames from a gym session.
@@ -110,12 +110,12 @@ GROUND RULES
 """
 
 MODEL_NAME = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
-SECONDS_PER_FRAME = float(os.getenv("GYMBUDDY_SECONDS_PER_FRAME", "2"))
-MAX_MODEL_FRAMES = int(os.getenv("GYMBUDDY_MAX_MODEL_FRAMES", "12"))
-MAX_PREVIEW_FRAMES = int(os.getenv("GYMBUDDY_MAX_PREVIEW_FRAMES", "3"))
+SECONDS_PER_FRAME = float(os.getenv("GYMCOM_SECONDS_PER_FRAME", "2"))
+MAX_MODEL_FRAMES = int(os.getenv("GYMCOM_MAX_MODEL_FRAMES", "12"))
+MAX_PREVIEW_FRAMES = int(os.getenv("GYMCOM_MAX_PREVIEW_FRAMES", "3"))
 BASE_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="GymBuddy Vision API")
+app = FastAPI(title="GymCom API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -239,7 +239,7 @@ def root() -> FileResponse:
 @app.get("/api", response_class=PlainTextResponse)
 def api_root() -> str:
     return (
-        "GymBuddy Vision API is running.\n\n"
+        "GymCom API is running.\n\n"
         "Frontend: GET /\n"
         "Live page: GET /live.html\n"
         "Analyze endpoint: POST /api/analyze\n"
@@ -316,7 +316,7 @@ async def analyze_video(
         )
 
     suffix = Path(file.filename).suffix or ".mp4"
-    workspace = Path(tempfile.mkdtemp(prefix="gymbuddy_"))
+    workspace = Path(tempfile.mkdtemp(prefix="gymcom_"))
     video_path = workspace / f"upload{suffix}"
     frame_dir = workspace / "frames"
 
