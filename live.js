@@ -433,8 +433,7 @@ function setLiveStatus(text, state = "") {
 }
 
 function setCameraButtons(isRunning = false) {
-  const exerciseSelected = Boolean(profile());
-  startLiveButton.disabled = !exerciseSelected || isRunning;
+  startLiveButton.disabled = isRunning;
   startLiveButton.setAttribute("aria-disabled", String(startLiveButton.disabled));
   stopLiveButton.disabled = !isRunning;
   stopLiveButton.setAttribute("aria-disabled", String(stopLiveButton.disabled));
@@ -1168,8 +1167,11 @@ async function estimatePoseLoop() {
 
 async function startLiveMode() {
   if (!profile()) {
-    setLiveStatus(DEFAULT_STATUS);
+    const selectMessage = "Select an exercise first, then press Start camera.";
+    setLiveStatus(selectMessage);
     liveCue.textContent = "Select an exercise.";
+    setOverlayBadge("Select exercise", "warn");
+    liveExercise.focus();
     return;
   }
   try {
