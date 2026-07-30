@@ -2,15 +2,19 @@ const liveVideo = document.querySelector("#live-video");
 const liveOverlay = document.querySelector("#live-overlay");
 const livePreviewEmpty = document.querySelector("#live-preview-empty");
 const liveExercise = document.querySelector("#live-exercise");
+const exerciseSearch = document.querySelector("#exercise-search");
+const exerciseChips = document.querySelectorAll(".exercise-chip");
 const liveAngle = document.querySelector("#live-angle");
 const liveModel = document.querySelector("#live-model");
 const startLiveButton = document.querySelector("#start-live");
 const stopLiveButton = document.querySelector("#stop-live");
 const liveStatus = document.querySelector("#live-status");
+const liveError = document.querySelector("#live-error");
 const liveReps = document.querySelector("#live-reps");
 const livePhase = document.querySelector("#live-phase");
 const liveScore = document.querySelector("#live-score");
 const liveConfidence = document.querySelector("#live-confidence");
+const confidenceBar = document.querySelector("#confidence-bar");
 const liveCue = document.querySelector("#live-cue");
 const leftAngleLabel = document.querySelector("#left-angle-label");
 const rightAngleLabel = document.querySelector("#right-angle-label");
@@ -28,6 +32,7 @@ const exerciseJoint = document.querySelector("#exercise-joint");
 const exerciseRange = document.querySelector("#exercise-range");
 const exerciseView = document.querySelector("#exercise-view");
 const exerciseChain = document.querySelector("#exercise-chain");
+const generateClaudeReport = document.querySelector("#generate-claude-report");
 
 const ctx = liveOverlay.getContext("2d");
 
@@ -40,8 +45,11 @@ let lastPhase = "Ready";
 let smoothedAngle = null;
 let stableFrames = 0;
 let totalFrames = 0;
+let activeExerciseFilter = "all";
+let sessionHasData = false;
 
-const DEFAULT_STATUS = "Camera idle. Start live mode to begin browser-based pose tracking.";
+const WAITING_TEXT = "Waiting...";
+const DEFAULT_STATUS = "Select an exercise and align your body in frame, then press Start.";
 const ACTIVE_CHAIN_COLOR = "#40d3a8";
 const BODY_CHAIN_COLOR = "rgba(255, 247, 239, 0.56)";
 const JOINT_COLOR = "#f3f0e7";
@@ -414,11 +422,59 @@ const BASE_SKELETON_EDGES = [
 ];
 
 function profile() {
-  return EXERCISE_PROFILES[liveExercise.value];
+  return EXERCISE_PROFILES[liveExercise.value] || null;
 }
 
-function setLiveStatus(text) {
+function setLiveStatus(text, state = "") {
   liveStatus.textContent = text;
+  liveStatus.classList.toggle("is-loading", state === "loading");
+}
+
+function setCameraButtons(isRunning = false) {
+  const exerciseSelected = Boolean(profile());
+  startLiveButton.disabled = !exerciseSelected || isRunning;
+  startLiveButton.setAttribute("aria-disabled", String(startLiveButton.disabled));
+  stopLiveButton.disabled = !isRunning;
+  stopLiveButton.setAttribute("aria-disabled", String(stopLiveButton.disabled));
+}
+
+function hideLiveError() {
+  liveError.hidden = true;
+  liveError.textContent = "";
+}
+
+function showLiveError(text) {
+  liveError.textContent = text;
+  liveError.hidden = false;
+}
+
+function setWaiting(el, waiting = true) {
+  const card = el.closest(".metric-card, .live-digest-grid article");
+  if (card) {
+    card.classList.toggle("is-waiting", waiting);
+  }
+}
+
+function setReadout(el, value, waiting = false) {
+  el.textContent = waiting ? WAITING_TEXT : value;
+  setWaiting(el, waiting);
+}
+
+function setConfidence(value) {
+  if (Number.isFinite(value)) {
+    liveConfidence.textContent = formatPercent(value);
+    confidenceBar.style.width = formatPercent(value);
+    setWaiting(liveConfidence, false);
+    return;
+  }
+  liveConfidence.textContent = WAITING_TEXT;
+  confidenceBar.style.width = "0%";
+  setWaiting(liveConfidence, true);
+}
+
+function setClaudeReportEnabled(enabled) {
+  generateClaudeReport.disabled = !enabled;
+  generateClaudeReport.setAttribute("aria-disabled", String(!enabled));
 }
 
 function setOverlayBadge(text, kind = "neutral") {
@@ -433,6 +489,8 @@ function resetSessionState() {
   smoothedAngle = null;
   stableFrames = 0;
   totalFrames = 0;
+  sessionHasData = false;
+  setClaudeReportEnabled(false);
 }
 
 function validPoint(point, threshold = SCORE_THRESHOLD) {
@@ -502,8 +560,12 @@ function calculateAngle(a, b, c) {
 }
 
 function getSideChain(sideName, keypointMap, threshold = SCORE_THRESHOLD) {
+  const currentProfile = profile();
+  if (!currentProfile) {
+    return null;
+  }
   const side = sideName === "left" ? "left" : "right";
-  const names = profile().chain.map((joint) => `${side}_${joint}`);
+  const names = currentProfile.chain.map((joint) => `${side}_${joint}`);
   const [a, b, c] = names.map((name) => keypointMap[name] || keypointMap[pointKey(name)]);
   if (!validPoint(a, threshold) || !validPoint(b, threshold) || !validPoint(c, threshold)) {
     return null;
@@ -512,8 +574,12 @@ function getSideChain(sideName, keypointMap, threshold = SCORE_THRESHOLD) {
 }
 
 function confidenceForSide(sideName, keypointMap) {
+  const currentProfile = profile();
+  if (!currentProfile) {
+    return null;
+  }
   const side = sideName === "left" ? "left" : "right";
-  const names = profile().chain.map((joint) => `${side}_${joint}`);
+  const names = currentProfile.chain.map((joint) => `${side}_${joint}`);
   return average(
     names.map((name) => {
       const point = keypointMap[name] || keypointMap[pointKey(name)];
@@ -551,7 +617,11 @@ function isFacePoint(name) {
 }
 
 function activeEdges() {
-  const joints = profile().chain;
+  const currentProfile = profile();
+  if (!currentProfile) {
+    return new Set();
+  }
+  const joints = currentProfile.chain;
   const left = joints.map((joint) => `left_${joint}`);
   const right = joints.map((joint) => `right_${joint}`);
   return new Set([
@@ -587,7 +657,8 @@ function drawSkeleton(imageMap) {
     if (!validPoint(point) || isFacePoint(name) || !name.startsWith("left_") && !name.startsWith("right_")) {
       return;
     }
-    const activeJoint = profile().chain.some((joint) => name.endsWith(`_${joint}`));
+    const currentProfile = profile();
+    const activeJoint = currentProfile?.chain.some((joint) => name.endsWith(`_${joint}`));
     ctx.beginPath();
     ctx.fillStyle = activeJoint ? ACTIVE_JOINT_COLOR : JOINT_COLOR;
     ctx.arc(point.x, point.y, activeJoint ? 6 : 4, 0, Math.PI * 2);
@@ -630,6 +701,10 @@ function coverageForProfile(imageMap) {
 }
 
 function orientationHint(imageMap) {
+  const currentProfile = profile();
+  if (!currentProfile) {
+    return null;
+  }
   const leftShoulder = imageMap.left_shoulder;
   const rightShoulder = imageMap.right_shoulder;
   const leftHip = imageMap.left_hip;
@@ -646,16 +721,23 @@ function orientationHint(imageMap) {
   ]) || 1;
   const widthRatio = average([shoulderWidth, hipWidth]) / torsoHeight;
 
-  if (profile().bestView === "side" && widthRatio > 0.62) {
+  if (currentProfile.bestView === "side" && widthRatio > 0.62) {
     return "Turn your body more to the side for cleaner angle tracking.";
   }
-  if (profile().bestView === "front" && widthRatio < 0.36) {
+  if (currentProfile.bestView === "front" && widthRatio < 0.36) {
     return "Turn a little more toward the camera for better left/right comparison.";
   }
   return null;
 }
 
 function positioningFeedback(bounds, imageMap) {
+  const currentProfile = profile();
+  if (!currentProfile) {
+    return {
+      message: "Select an exercise before starting the camera.",
+      quality: 0
+    };
+  }
   const coverage = coverageForProfile(imageMap);
   if (coverage < 0.75) {
     return {
@@ -664,9 +746,9 @@ function positioningFeedback(bounds, imageMap) {
     };
   }
 
-  if (liveAngle.value !== "three-quarter" && liveAngle.value !== profile().bestView) {
+  if (liveAngle.value !== "three-quarter" && liveAngle.value !== currentProfile.bestView) {
     return {
-      message: `Switch to a ${profile().bestView} camera view for cleaner ${profile().label.toLowerCase()} tracking.`,
+      message: `Switch to a ${currentProfile.bestView} camera view for cleaner ${currentProfile.label.toLowerCase()} tracking.`,
       quality: 0.6
     };
   }
@@ -710,7 +792,7 @@ function positioningFeedback(bounds, imageMap) {
 
 function depthProgress(angle) {
   const currentProfile = profile();
-  if (!Number.isFinite(angle) || currentProfile.top === currentProfile.bottom) {
+  if (!currentProfile || !Number.isFinite(angle) || currentProfile.top === currentProfile.bottom) {
     return null;
   }
   return clamp((currentProfile.top - angle) / (currentProfile.top - currentProfile.bottom), 0, 1);
@@ -718,6 +800,9 @@ function depthProgress(angle) {
 
 function determinePhase(angle, delta) {
   const currentProfile = profile();
+  if (!currentProfile) {
+    return "Ready";
+  }
   if (!Number.isFinite(angle)) {
     return "Tracking...";
   }
@@ -744,7 +829,7 @@ function determinePhase(angle, delta) {
 
 function updateRepCounter(angle, confidence, positionOk) {
   const currentProfile = profile();
-  if (!Number.isFinite(angle) || currentProfile.top === currentProfile.bottom || confidence < 0.5 || !positionOk) {
+  if (!currentProfile || !Number.isFinite(angle) || currentProfile.top === currentProfile.bottom || confidence < 0.5 || !positionOk) {
     return;
   }
 
@@ -762,9 +847,9 @@ function formatPercent(value) {
 
 function scoreForm(angles, positionQuality, phase, depthRatio) {
   const currentProfile = profile();
-  if (!Number.isFinite(angles.average)) {
+  if (!currentProfile || !Number.isFinite(angles.average)) {
     return {
-      score: "--",
+      score: WAITING_TEXT,
       cue: "Hold the target joints in view so the model can lock onto the movement."
     };
   }
@@ -819,9 +904,13 @@ function updateDigest(angles, depthRatio, positionQuality) {
   }
   totalFrames += 1;
 
-  liveDepth.textContent = depthRatio == null ? "--" : formatPercent(depthRatio);
-  liveSymmetry.textContent = symmetryGap == null ? "--" : `${Math.round(symmetryGap)}° gap`;
-  liveStable.textContent = totalFrames ? formatPercent(stableFrames / totalFrames) : "--";
+  setReadout(liveDepth, depthRatio == null ? WAITING_TEXT : formatPercent(depthRatio), depthRatio == null);
+  setReadout(liveSymmetry, symmetryGap == null ? WAITING_TEXT : `${Math.round(symmetryGap)}° gap`, symmetryGap == null);
+  setReadout(liveStable, totalFrames ? formatPercent(stableFrames / totalFrames) : WAITING_TEXT, !totalFrames);
+  if (totalFrames > 12) {
+    sessionHasData = true;
+    setClaudeReportEnabled(true);
+  }
 }
 
 function updateSummary(angles, phase, depthRatio, positionResult, form) {
@@ -867,6 +956,18 @@ function formatRange(currentProfile) {
 
 function updateAngleLabels() {
   const currentProfile = profile();
+  if (!currentProfile) {
+    leftAngleLabel.textContent = "Left angle";
+    rightAngleLabel.textContent = "Right angle";
+    liveModelBadge.textContent = liveModel.value.charAt(0).toUpperCase() + liveModel.value.slice(1);
+    exerciseCategory.textContent = WAITING_TEXT;
+    exerciseEquipment.textContent = WAITING_TEXT;
+    exerciseJoint.textContent = WAITING_TEXT;
+    exerciseRange.textContent = WAITING_TEXT;
+    exerciseView.textContent = WAITING_TEXT;
+    exerciseChain.textContent = WAITING_TEXT;
+    return;
+  }
   const label = currentProfile.label;
   leftAngleLabel.textContent = `Left ${label}`;
   rightAngleLabel.textContent = `Right ${label}`;
@@ -880,18 +981,22 @@ function updateAngleLabels() {
 }
 
 function resetLiveReadout() {
-  liveReps.textContent = "0";
-  livePhase.textContent = "Ready";
-  liveScore.textContent = "--";
-  liveConfidence.textContent = "--";
-  liveCue.textContent = profile().cue;
-  leftAngleEl.textContent = "--";
-  rightAngleEl.textContent = "--";
-  liveDepth.textContent = "--";
-  liveSymmetry.textContent = "--";
-  liveStable.textContent = "--";
-  liveSummary.textContent = "Start the camera and stand fully inside frame to begin live kinematic tracking.";
+  const currentProfile = profile();
+  setReadout(liveReps, "0");
+  setReadout(livePhase, currentProfile ? "Ready" : "Select exercise");
+  setReadout(liveScore, WAITING_TEXT, true);
+  setConfidence(null);
+  liveCue.textContent = currentProfile ? `${currentProfile.cue}` : "Select an exercise.";
+  setReadout(leftAngleEl, WAITING_TEXT, true);
+  setReadout(rightAngleEl, WAITING_TEXT, true);
+  setReadout(liveDepth, WAITING_TEXT, true);
+  setReadout(liveSymmetry, WAITING_TEXT, true);
+  setReadout(liveStable, WAITING_TEXT, true);
+  liveSummary.textContent = currentProfile
+    ? "Start the camera and stand fully inside frame to begin live kinematic tracking."
+    : "Select an exercise, align your body in frame, then press Start.";
   setOverlayBadge("Align full body inside frame");
+  setCameraButtons(Boolean(liveStream));
 }
 
 async function destroyDetector() {
@@ -911,6 +1016,8 @@ async function ensureDetector() {
     return detector;
   }
 
+  setLiveStatus("Loading pose model. This may take a moment on older devices.", "loading");
+  setOverlayBadge("Loading pose model", "neutral");
   await tf.setBackend("webgl");
   detector = await poseDetection.createDetector(poseDetection.SupportedModels.BlazePose, {
     runtime: "mediapipe",
@@ -970,19 +1077,19 @@ async function estimatePoseLoop() {
   updateDigest(angles, depthRatio, positionResult.quality);
   updateSummary(angles, phase, depthRatio, positionResult, form);
 
-  liveReps.textContent = String(repCounter);
-  livePhase.textContent = phase;
-  liveScore.textContent = form.score;
-  liveConfidence.textContent = formatPercent(angles.confidence);
+  setReadout(liveReps, String(repCounter));
+  setReadout(livePhase, phase);
+  setReadout(liveScore, form.score, form.score === WAITING_TEXT);
+  setConfidence(angles.confidence);
   liveCue.textContent = form.cue;
-  leftAngleEl.textContent = Number.isFinite(angles.left) ? `${angles.left}°` : "--";
-  rightAngleEl.textContent = Number.isFinite(angles.right) ? `${angles.right}°` : "--";
+  setReadout(leftAngleEl, Number.isFinite(angles.left) ? `${angles.left}°` : WAITING_TEXT, !Number.isFinite(angles.left));
+  setReadout(rightAngleEl, Number.isFinite(angles.right) ? `${angles.right}°` : WAITING_TEXT, !Number.isFinite(angles.right));
 
   if (positionOk) {
     setLiveStatus(
       `Tracking ${liveExercise.options[liveExercise.selectedIndex].text} | ${profile().label} | Preferred view: ${profile().bestView}`
     );
-    setOverlayBadge(`${phase} | ${profile().label} ${Number.isFinite(smoothedAngle) ? `${Math.round(smoothedAngle)}°` : "--"}`, "good");
+    setOverlayBadge(`${phase} | ${profile().label} ${Number.isFinite(smoothedAngle) ? `${Math.round(smoothedAngle)}°` : WAITING_TEXT}`, "good");
   } else {
     setLiveStatus(positionResult.message);
     setOverlayBadge(positionResult.message, "warn");
@@ -993,7 +1100,13 @@ async function estimatePoseLoop() {
 }
 
 async function startLiveMode() {
+  if (!profile()) {
+    setLiveStatus(DEFAULT_STATUS);
+    liveCue.textContent = "Select an exercise.";
+    return;
+  }
   try {
+    hideLiveError();
     if (liveStream) {
       stopLiveMode();
     }
@@ -1009,17 +1122,24 @@ async function startLiveMode() {
     resetSessionState();
     resetLiveReadout();
     updateAngleLabels();
+    setCameraButtons(true);
     setLiveStatus("Camera started. Stand where your full body is visible and hold still for a moment.");
     setOverlayBadge("Hold still while model locks on", "neutral");
     animationFrameId = window.requestAnimationFrame(estimatePoseLoop);
   } catch (error) {
     console.error(error);
-    setLiveStatus("Camera or MediaPipe pose initialization failed. Check camera permissions and make sure the model scripts can load.");
-    setOverlayBadge("Model failed to load", "warn");
+    const denied = error?.name === "NotAllowedError" || error?.name === "SecurityError";
+    const message = denied
+      ? "Camera access denied. Please allow webcam permissions in your browser settings and refresh."
+      : "Camera or MediaPipe pose initialization failed. Check camera permissions and make sure the model scripts can load.";
+    showLiveError(message);
+    setLiveStatus(message);
+    setOverlayBadge(denied ? "Camera access denied" : "Model failed to load", "warn");
+    setCameraButtons(false);
   }
 }
 
-function stopLiveMode() {
+function stopLiveMode(preserveSession = false) {
   if (animationFrameId) {
     window.cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
@@ -1031,27 +1151,110 @@ function stopLiveMode() {
   ctx.clearRect(0, 0, liveOverlay.width, liveOverlay.height);
   liveVideo.srcObject = null;
   livePreviewEmpty.style.display = "grid";
-  resetSessionState();
-  resetLiveReadout();
+  if (preserveSession && sessionHasData) {
+    liveCue.textContent = "Session ended. Review the digest or generate a Claude report.";
+    liveSummary.textContent = `${liveSummary.textContent} Camera stopped. Review this digest or generate a Claude report.`;
+    setOverlayBadge("Session ended", "neutral");
+    setClaudeReportEnabled(true);
+  } else {
+    resetSessionState();
+    resetLiveReadout();
+  }
   setLiveStatus("Camera stopped. Real joint tracking is paused.");
+  setCameraButtons(false);
 }
 
 async function refreshDetectorIfRunning() {
   updateAngleLabels();
-  liveCue.textContent = profile().cue;
+  hideLiveError();
+  resetLiveReadout();
+  setCameraButtons(Boolean(liveStream));
   if (!liveStream) {
     return;
   }
-  stopLiveMode();
+  stopLiveMode(false);
   await startLiveMode();
 }
 
+function optionMatchesFilter(option) {
+  if (!option.value) {
+    return true;
+  }
+  const currentProfile = EXERCISE_PROFILES[option.value];
+  const text = option.textContent.toLowerCase();
+  if (!currentProfile) {
+    return false;
+  }
+  if (activeExerciseFilter === "all") {
+    return true;
+  }
+  if (activeExerciseFilter === "bodyweight") {
+    return currentProfile.equipment.toLowerCase().includes("bodyweight");
+  }
+  if (activeExerciseFilter === "gym") {
+    return currentProfile.category.toLowerCase().includes("gym");
+  }
+  if (activeExerciseFilter === "core") {
+    return ["plank", "superman"].some((term) => text.includes(term));
+  }
+  if (activeExerciseFilter === "push") {
+    return ["push", "press", "dip", "raise"].some((term) => text.includes(term));
+  }
+  if (activeExerciseFilter === "pull") {
+    return ["pull", "row", "curl", "deadlift", "pulldown"].some((term) => text.includes(term));
+  }
+  return true;
+}
+
+function filterExercises() {
+  const query = exerciseSearch.value.trim().toLowerCase();
+  const options = Array.from(liveExercise.options);
+  let firstVisibleValue = "";
+
+  options.forEach((option) => {
+    const matchesQuery = !query || option.textContent.toLowerCase().includes(query);
+    const visible = optionMatchesFilter(option) && matchesQuery;
+    option.hidden = !visible;
+    option.disabled = !visible && Boolean(option.value);
+    if (visible && option.value && !firstVisibleValue) {
+      firstVisibleValue = option.value;
+    }
+  });
+
+  const selectedOption = liveExercise.options[liveExercise.selectedIndex];
+  if (selectedOption?.disabled) {
+    liveExercise.value = "";
+    refreshDetectorIfRunning();
+  }
+
+  setCameraButtons(Boolean(liveStream));
+}
+
+function setExerciseFilter(filter) {
+  activeExerciseFilter = filter;
+  exerciseChips.forEach((chip) => {
+    chip.classList.toggle("is-active", chip.dataset.filter === filter);
+  });
+  filterExercises();
+}
+
 startLiveButton.addEventListener("click", startLiveMode);
-stopLiveButton.addEventListener("click", stopLiveMode);
+stopLiveButton.addEventListener("click", () => stopLiveMode(true));
 liveExercise.addEventListener("change", refreshDetectorIfRunning);
 liveAngle.addEventListener("change", refreshDetectorIfRunning);
 liveModel.addEventListener("change", refreshDetectorIfRunning);
+exerciseSearch.addEventListener("input", filterExercises);
+exerciseChips.forEach((chip) => {
+  chip.addEventListener("click", () => setExerciseFilter(chip.dataset.filter));
+});
+generateClaudeReport.addEventListener("click", () => {
+  if (!sessionHasData) {
+    return;
+  }
+  setLiveStatus("Claude report generation is ready for backend wiring. Send saved clips, sampled frames, or movement metrics through /api/analyze.");
+});
 
 updateAngleLabels();
 resetLiveReadout();
 setLiveStatus(DEFAULT_STATUS);
+setCameraButtons(false);

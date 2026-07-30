@@ -34,10 +34,11 @@
         <section class="hero live-hero">
           <div class="hero-copy">
             <p class="eyebrow">Real-time movement coaching</p>
-            <h1>
+            <h1>GymCom Live</h1>
+            <p class="live-hero-lede">
               Track reps live.
               <span>Score form while the set is happening.</span>
-            </h1>
+            </p>
             <p class="hero-text">
               GymCom uses browser-based computer vision to analyze
               movement in real time, estimate joint angles, and deliver instant
@@ -46,15 +47,15 @@
               report.
             </p>
             <div class="hero-actions">
-              <a class="primary-link" href="#live-lab">Open live lab</a>
-              <a class="secondary-button" href="#claude-plan">See Claude workflow</a>
+              <a class="primary-link" href="#live-lab">Open Live Lab</a>
+              <a class="secondary-button" href="#claude-plan">See Claude Workflow</a>
             </div>
           </div>
 
           <aside class="hero-card">
             <div class="hero-card-head">
               <span>How this works</span>
-              <strong>Realtime tracking + post-set reasoning</strong>
+              <strong>Real-time tracking + post-set reasoning</strong>
             </div>
             <div class="hero-stack">
               <article>
@@ -66,8 +67,8 @@
                 <strong>Immediate form cues and positioning feedback</strong>
               </article>
               <article>
-                <span>Claude handoff</span>
-                <strong>Natural language feedback and automated performance digest</strong>
+                <span>AI-written session summary</span>
+                <strong>Generate a written coaching report with Claude</strong>
               </article>
             </div>
           </aside>
@@ -78,17 +79,41 @@
             <p class="section-tag">Live Lab</p>
             <h2>Exercise selection and live camera mode</h2>
             <p>
-              This page gives you the separate live-interaction surface you
-              asked for. The webcam runs locally and the dashboard shows reps,
-              phase, and form score in a software-only live kinematic flow.
+              This is your dedicated live-interaction interface. The webcam runs
+              locally and the dashboard shows reps, phase, and form score in a
+              software-only live kinematic flow.
             </p>
           </div>
 
+          <div class="live-warning-banner" role="note">
+            <strong>Movement coaching only.</strong>
+            GymCom is not a diagnostic medical device. Stop if you feel pain,
+            and use this feedback for exercise review rather than medical advice.
+          </div>
+
           <div class="live-grid">
-            <section class="live-controls">
-              <label>
-                Exercise
-                <select id="live-exercise">
+            <section class="live-controls" aria-labelledby="controls-title">
+              <div class="control-card">
+                <h3 class="report-label" id="controls-title">Controls</h3>
+                <p class="coach-feedback">
+                  Select an exercise and align your body in frame, then press Start.
+                </p>
+
+                <label for="exercise-search">
+                  Search exercises
+                  <input
+                    id="exercise-search"
+                    type="search"
+                    placeholder="Search exercises..."
+                    autocomplete="off"
+                    aria-label="Search exercises"
+                  />
+                </label>
+
+                <label for="live-exercise">
+                  Exercise
+                  <select id="live-exercise" aria-label="Select exercise">
+                    <option value="">Select an exercise</option>
                   <optgroup label="Home workout">
                     <option value="bodyweight-squat">Bodyweight squat</option>
                     <option value="reverse-lunge">Reverse lunge</option>
@@ -121,33 +146,48 @@
                     <option value="seated-row">Seated row</option>
                   </optgroup>
                 </select>
-              </label>
+                </label>
 
-              <label>
-                Camera angle
-                <select id="live-angle">
+                <div class="exercise-chip-grid" aria-label="Exercise categories">
+                  <button class="exercise-chip is-active" type="button" data-filter="all">All</button>
+                  <button class="exercise-chip" type="button" data-filter="bodyweight">Bodyweight</button>
+                  <button class="exercise-chip" type="button" data-filter="gym">Gym</button>
+                  <button class="exercise-chip" type="button" data-filter="push">Push</button>
+                  <button class="exercise-chip" type="button" data-filter="pull">Pull</button>
+                  <button class="exercise-chip" type="button" data-filter="core">Core</button>
+                </div>
+
+                <label for="live-angle">
+                  Camera angle
+                  <select id="live-angle" aria-label="Select camera angle">
                   <option value="side">Side</option>
                   <option value="front">Front</option>
                   <option value="three-quarter">45°</option>
                 </select>
-              </label>
+                </label>
 
-              <label>
-                Model profile
-                <select id="live-model">
+                <label for="live-model">
+                  Model profile
+                  <select id="live-model" aria-label="Select model profile">
                   <option value="heavy">Best accuracy (Heavy)</option>
                   <option value="full">Balanced (Full)</option>
                   <option value="lite">Fastest (Lite)</option>
                 </select>
-              </label>
+                  <span class="field-help" id="model-help">
+                    Heavy = max accuracy, slower. Lite = fastest, lighter tracking.
+                  </span>
+                </label>
 
-              <div class="action-row">
-                <button id="start-live" class="primary-button" type="button">
-                  Start camera
-                </button>
-                <button id="stop-live" class="secondary-button" type="button">
-                  Stop camera
-                </button>
+                <div class="action-row live-action-row">
+                  <button id="start-live" class="primary-button start-camera-button" type="button" disabled aria-disabled="true">
+                    <span aria-hidden="true">▶</span>
+                    Start camera
+                  </button>
+                  <button id="stop-live" class="secondary-button stop-camera-button" type="button" disabled aria-disabled="true">
+                    <span aria-hidden="true">■</span>
+                    Stop camera
+                  </button>
+                </div>
               </div>
 
               <div class="report-card exercise-spec-card">
@@ -185,63 +225,57 @@
               </div>
 
               <div class="live-status" id="live-status">
-                Camera idle. Start live mode to begin browser-based pose tracking.
+                Select an exercise and align your body in frame, then press Start.
               </div>
 
-              <div class="live-metrics-grid">
-                <article class="metric-card">
+              <div class="live-metrics-grid" aria-label="Live tracking metrics">
+                <article class="metric-card metric-card-active">
                   <span>Reps</span>
                   <strong id="live-reps">0</strong>
                 </article>
-                <article class="metric-card">
+                <article class="metric-card metric-card-active">
                   <span>Current phase</span>
                   <strong id="live-phase">Ready</strong>
                 </article>
-                <article class="metric-card">
+                <article class="metric-card is-waiting">
                   <span>Form score</span>
-                  <strong id="live-score">--</strong>
+                  <strong id="live-score">Waiting...</strong>
                 </article>
-                <article class="metric-card">
+                <article class="metric-card is-waiting confidence-card">
                   <span>Tracking confidence</span>
-                  <strong id="live-confidence">--</strong>
+                  <strong id="live-confidence">Waiting...</strong>
+                  <div class="confidence-track" aria-hidden="true">
+                    <span id="confidence-bar"></span>
+                  </div>
                 </article>
-                <article class="metric-card">
-                  <span>Primary cue</span>
-                  <strong id="live-cue">Select an exercise</strong>
-                </article>
-                <article class="metric-card">
+                <article class="metric-card is-waiting">
                   <span id="left-angle-label">Left angle</span>
-                  <strong id="left-knee-angle">--</strong>
+                  <strong id="left-knee-angle">Waiting...</strong>
                 </article>
-                <article class="metric-card">
+                <article class="metric-card is-waiting">
                   <span id="right-angle-label">Right angle</span>
-                  <strong id="right-knee-angle">--</strong>
+                  <strong id="right-knee-angle">Waiting...</strong>
                 </article>
-              </div>
-
-              <div class="report-card live-clinical-note">
-                <div class="report-label">Clinical note</div>
-                <p class="coach-feedback">
-                  This is a movement coaching tool, not a diagnostic medical
-                  device. It is best used for exercise feedback, progress
-                  monitoring, and technique review.
-                </p>
               </div>
 
               <div class="report-card live-session-digest">
                 <div class="report-label">Live session digest</div>
+                <p class="coach-feedback">
+                  After your set, this area summarizes depth, symmetry, stable
+                  frames, and model profile.
+                </p>
                 <div class="live-digest-grid">
                   <article>
                     <span>Target depth</span>
-                    <strong id="live-depth">--</strong>
+                    <strong id="live-depth">Waiting...</strong>
                   </article>
                   <article>
                     <span>Best symmetry</span>
-                    <strong id="live-symmetry">--</strong>
+                    <strong id="live-symmetry">Waiting...</strong>
                   </article>
                   <article>
                     <span>Stable frames</span>
-                    <strong id="live-stable">--</strong>
+                    <strong id="live-stable">Waiting...</strong>
                   </article>
                   <article>
                     <span>Model</span>
@@ -252,29 +286,68 @@
                   Start the camera and stand fully inside frame to begin live
                   kinematic tracking.
                 </p>
+                <button
+                  id="generate-claude-report"
+                  class="secondary-button claude-report-button"
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                >
+                  Generate Claude Report
+                </button>
+                <p class="privacy-note">
+                  Your live video is processed locally in the browser. Only
+                  clips, sampled frames, or metrics you choose to submit should
+                  be sent to Claude through the backend.
+                </p>
               </div>
             </section>
 
-            <section class="live-camera-shell">
-              <div class="preview-shell live-preview">
-                <video id="live-video" autoplay muted playsinline></video>
+            <section class="live-camera-shell" aria-labelledby="live-feed-title">
+              <h3 class="sr-only" id="live-feed-title">Live feed and cues</h3>
+              <div class="live-cue-banner" role="status" aria-live="polite">
+                <span>Primary cue:</span>
+                <strong id="live-cue">Select an exercise.</strong>
+              </div>
+
+              <div class="report-card live-howto-card">
+                <div class="report-label">How it works</div>
+                <ol class="live-steps">
+                  <li>Pick an exercise.</li>
+                  <li>Start camera.</li>
+                  <li>Complete your set.</li>
+                  <li>Review your digest or send it to Claude.</li>
+                </ol>
+              </div>
+
+              <div
+                class="preview-shell live-preview"
+                role="img"
+                aria-label="Live webcam feed for pose tracking"
+              >
+                <video id="live-video" autoplay muted playsinline aria-label="Live webcam feed for pose tracking"></video>
                 <canvas id="live-overlay" class="live-overlay"></canvas>
                 <div class="live-overlay-badge" id="live-overlay-badge">
                   Align full body inside frame
                 </div>
                 <div class="preview-empty" id="live-preview-empty">
-                  <p>Camera not started</p>
-                  <span>Live tracking will appear here.</span>
+                  <p>Camera is idle. Click Start to begin.</p>
+                  <span>Live tracking will appear in this frame.</span>
                 </div>
               </div>
 
+              <div class="live-status live-error" id="live-error" role="alert" hidden>
+                Camera access denied. Please allow webcam permissions in your browser settings and refresh.
+              </div>
+
               <div class="report-card live-notes-card">
-                <div class="report-label">How this should work for real</div>
+                <div class="report-label">How this works in practice</div>
                 <ul class="report-list">
                   <li>MediaPipe BlazePose GHUM runs in the browser and tracks a 33-landmark full-body skeleton.</li>
                   <li>The selected exercise maps to a primary joint chain, preferred camera view, and top/bottom angle targets.</li>
                   <li>Instant cues come from joint range, symmetry, and body positioning rules.</li>
-                  <li>Send saved clips or sampled frames to Claude for the final deep report.</li>
+                  <li>Send saved clips, sampled frames, or tracked metrics to Claude for the final coaching report.</li>
+                  <li>Best experience is on a modern laptop or desktop with a stable webcam.</li>
                 </ul>
               </div>
 
@@ -304,7 +377,7 @@
         <section class="past-reports-section" id="claude-plan">
           <div class="panel-heading">
             <p class="section-tag">Claude plan</p>
-            <h2>How to use the Claude API key in a smart way</h2>
+            <h2>How to use the Claude API key securely and efficiently</h2>
             <p>
               Claude should not be your millisecond-by-millisecond tracker.
               Instead, use live browser pose estimation for speed, then hand the
@@ -334,11 +407,11 @@
             </article>
             <article class="past-report-card">
               <span>Claude step 3</span>
-              <strong>Send a clip after the set</strong>
+              <strong>Generate a written coaching report</strong>
               <p>
-                Save a short clip or sampled frames, then send them to Claude
-                together with tracked metrics so it can produce a cleaner final
-                report with less guessing.
+                Send only the clip, sampled frames, or movement metrics the user
+                chooses through the backend so Claude can produce a cleaner
+                final report with less guessing.
               </p>
             </article>
           </div>
